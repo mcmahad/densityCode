@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)..\densityCode;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -140,26 +140,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\densityCode\binning.cpp" />
-    <ClCompile Include="..\densityCode\calibration.cpp" />
-    <ClCompile Include="..\densityCode\eventHandler.cpp" />
-    <ClCompile Include="..\densityCode\graphing.cpp" />
-    <ClCompile Include="..\densityCode\msmtMgrEvtHandler.cpp" />
-    <ClCompile Include="..\densityCode\tallyTracker.cpp" />
-    <ClCompile Include="..\densityCode\timerEvtHandler.cpp" />
-    <ClCompile Include="..\densityCode\win32shims.cpp" />
-    <ClCompile Include="..\densityCode\WString.cpp" />
+    <ClCompile Include="..\binning.cpp" />
+    <ClCompile Include="..\calibration.cpp" />
+    <ClCompile Include="..\eventHandler.cpp" />
+    <ClCompile Include="..\graphing.cpp" />
+    <ClCompile Include="..\msmtMgrEvtHandler.cpp" />
+    <ClCompile Include="..\tallyTracker.cpp" />
+    <ClCompile Include="..\timerEvtHandler.cpp" />
+    <ClCompile Include="..\win32shims.cpp" />
+    <ClCompile Include="..\WString.cpp" />
     <ClCompile Include="TareSim.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\densityCode\calibration.h" />
-    <ClInclude Include="..\densityCode\commonHeader.h" />
-    <ClInclude Include="..\densityCode\events.h" />
-    <ClInclude Include="..\densityCode\graphing.h" />
-    <ClInclude Include="..\densityCode\msmtMgrEvtHandler.h" />
-    <ClInclude Include="..\densityCode\taringTracker.h" />
-    <ClInclude Include="..\densityCode\timerEvtHandler.h" />
-    <ClInclude Include="..\densityCode\win32shims.h" />
+    <ClInclude Include="..\calibration.h" />
+    <ClInclude Include="..\commonHeader.h" />
+    <ClInclude Include="..\events.h" />
+    <ClInclude Include="..\graphing.h" />
+    <ClInclude Include="..\msmtMgrEvtHandler.h" />
+    <ClInclude Include="..\timerEvtHandler.h" />
+    <ClInclude Include="..\win32shims.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

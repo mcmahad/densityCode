@@ -604,6 +604,22 @@ bool shouldShowCsvForDebug(void)
 
 static bool pleaseShowTareStateForDebug = false;
 
+static int32_t getMaxDivisorScalingLimit(sensorType_t sensor)
+{
+    int32_t returnValue;
+
+    //  Returns the max limit based on sensor type
+    switch (sensor)
+    {
+    case sensorType_DistanceLength: returnValue = MAX_DIVISOR_SCALING_LIMIT / 10; break;
+    case sensorType_DistanceWidth:  returnValue = MAX_DIVISOR_SCALING_LIMIT / 10; break;
+    case sensorType_DistanceHeight: returnValue = MAX_DIVISOR_SCALING_LIMIT / 10; break;
+    case sensorType_Weight:         returnValue = MAX_DIVISOR_SCALING_LIMIT /  3; break;
+    default:                        returnValue = MAX_DIVISOR_SCALING_LIMIT /  1; break;
+    }
+    return returnValue;
+}
+
 void toggleTareStateForDebug(void)
 {
     if (pleaseShowTareStateForDebug)
@@ -685,7 +701,7 @@ void msmtMgrObj_Initialize(void)
 //      dbgSerial.println(index);
 //      for (int myIndex = 0; myIndex < 30000; myIndex++) _NOP();
 
-        quantizationLimit [index] = MAX_DIVISOR_SCALING_LIMIT;        //  Starting default value, adjust if needed
+        quantizationLimit [index] = getMaxDivisorScalingLimit(index);        //  Starting default value, adjust if needed
         filterScaling_Pctg[index] = quantizationLimit[index] - 1;
 
 //      dbgSerial.print (F("meas #1"));
@@ -815,7 +831,8 @@ void msmtMgrObj_EventHandler(eventQueue_t* event)
         for (int index = 0; index < sensorType_MaxSensors; index++)
         {
             //  Set back to default value
-            quantizationLimit[index] = MAX_DIVISOR_SCALING_LIMIT;
+            quantizationLimit[index] = getMaxDivisorScalingLimit(index);
+
             if (filterScaling_Pctg[index] > quantizationLimit[index] - 1)
             {
                 filterScaling_Pctg[index] = quantizationLimit[index] - 1;
@@ -1886,7 +1903,7 @@ static          bool    showHeader = true;
                 {   /*  Keep the numerator large after state transition for a few measurement reports.  This lets
                         the final setting occur quicker.
                     */
-                    numerator = max(numerator, MAX_DIVISOR_SCALING_LIMIT / 10);
+                    numerator = max(numerator, getMaxDivisorScalingLimit(sensorIndex) / 10);
                 }
 
                 if (0  &&  sensorType_Test == sensorIndex)
@@ -1974,7 +1991,7 @@ static          bool    showHeader = true;
 //              dbgSerial.print(F("   "));                       //   <<--- 3 spaces
                 dbgSerial.print(min(22, (int32_t)numerator));
                 dbgSerial.print(F(" "));
-                dbgSerial.print((int32_t)denominator - MAX_DIVISOR_SCALING_LIMIT );
+                dbgSerial.print((int32_t)denominator - getMaxDivisorScalingLimit(sensorIndex));
                 dbgSerial.print(F(" "));
 //              dbgSerial.print((int32_t)filteredSensorReading[sensorIndex]);
 //              dbgSerial.print(F(" "));

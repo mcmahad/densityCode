@@ -18,57 +18,54 @@
     <ClCompile Include="TareSim.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\msmtMgrEvtHandler.cpp">
+    <ClCompile Include="..\binning.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\calibration.cpp">
+    <ClCompile Include="..\calibration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\WString.cpp">
+    <ClCompile Include="..\eventHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\win32shims.cpp">
+    <ClCompile Include="..\graphing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\eventHandler.cpp">
+    <ClCompile Include="..\tallyTracker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\timerEvtHandler.cpp">
+    <ClCompile Include="..\win32shims.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\graphing.cpp">
+    <ClCompile Include="..\timerEvtHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\tallyTracker.cpp">
+    <ClCompile Include="..\msmtMgrEvtHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\densityCode\binning.cpp">
+    <ClCompile Include="..\WString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\densityCode\msmtMgrEvtHandler.h">
+    <ClInclude Include="..\calibration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\densityCode\events.h">
+    <ClInclude Include="..\graphing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\densityCode\calibration.h">
+    <ClInclude Include="..\msmtMgrEvtHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\densityCode\timerEvtHandler.h">
+    <ClInclude Include="..\events.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\densityCode\graphing.h">
+    <ClInclude Include="..\commonHeader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\densityCode\commonHeader.h">
+    <ClInclude Include="..\timerEvtHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\densityCode\win32shims.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\densityCode\taringTracker.h">
+    <ClInclude Include="..\win32shims.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

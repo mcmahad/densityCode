@@ -97,7 +97,7 @@ void loadCellObj_EventHandler(eventQueue_t* event)
 
     case loadCellEvt_InitializeLoadCell:
         //   Nothing really to do in this event, it could be removed
-        if (0
+        if (0)
         {
             dbgSerial.println(F("initLoadCell"));
         }
