@@ -138,7 +138,10 @@ void serialReadObj_EventHandler(eventQueue_t* event)
     case serialReadEvt_DataAvailable:
         /*  serial data has arrived  */
 
-//      dbgSerial.println(F("ReadEvtDataAvail"));
+        if  (0)
+        {
+            dbgSerial.println(F("ReadEvtDataAvail"));
+        }
         done = false;
         while (!done)
         {

@@ -88,6 +88,7 @@ void ADS1232::begin(byte dout, byte pd_sck, byte pdwn, uint8_t mySensorId) {
     digitalWrite(PDWN, HIGH); delayMicroseconds(50);    //  Minimum is 26 uSec while high in t16
     digitalWrite(PDWN,  LOW); delayMicroseconds(50);    //  Minimum is 26 uSec while  low in t17
     digitalWrite(PDWN, HIGH);                           //  Start continuous conversion
+//  dbgSerial.println(F("begin() HIGH"));
 
     filteredAvg_cnts   = 0;
     filterScaling_Pctg = 100;       //  No filtering, new value only
@@ -100,6 +101,10 @@ bool ADS1232::is_ready() {
 long ADS1232::read() {
     long    returnValue;
 
+    if (0)
+    {
+        dbgSerial.println(F("long ADS1232::read()"));
+    }
     /*  Note : It is asssumed the PD_SCK pin is low before calling shiftIn().  In this application, it is  */
     returnValue  =  ((long)(shiftIn(DOUT, PD_SCK, MSBFIRST))) << 16;
     returnValue |=  ((long)(shiftIn(DOUT, PD_SCK, MSBFIRST))) <<  8;
@@ -118,14 +123,20 @@ long ADS1232::read() {
     if (returnValue == 0xFFFFFF)
     {
         /*  This is a bogus reading, don't process further  */
-//      dbgSerial.println(F("ignore bogus reading"));
+        if (0)
+        {
+            dbgSerial.println(F("ignore bogus reading"));
+        }
         return;
     }
 
     if ((returnValue & 0xFFFF) == 0xFFFF)
     {
         /*  This is a bogus reading, don't process further  */
-        dbgSerial.println(F("ignore "));
+        if (0)
+        {
+            dbgSerial.println(F("ignore shortie"));
+        }
         return;
     }
 
@@ -142,6 +153,11 @@ long ADS1232::read() {
     filteredAvg_cnts = returnValue * filterScaling_Pctg + filteredAvg_cnts * (100 - filterScaling_Pctg);
     filteredAvg_cnts /= 100;
 
+    if (0)
+    {
+        dbgSerial.print  (F("long ADS1232::read() returns "));
+        dbgSerial.println(returnValue);
+    }
     return returnValue;
 }
 
@@ -151,6 +167,7 @@ void ADS1232::makeSclkPulse() {
 }
 
 void ADS1232::power_down() {
+//  dbgSerial.println(F("power_down() LOW"));
     digitalWrite(PDWN, LOW);
     delayMicroseconds(20);    //  Minimum is 26 uSec while low in t14, figure 8.12
 }
@@ -166,6 +183,7 @@ bool ADS1232::power_up() {
         digitalWrite(PDWN, HIGH);                           //  Start continuous conversion
         returnValue = true;                                 //  We need an autocalibration
     }
+
     return returnValue;
 }
 

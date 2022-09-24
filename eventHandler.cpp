@@ -198,7 +198,7 @@ void processEvents(void)
     }
 
 #ifdef  SHOW_EACH_EVENT
-    dbgSerial.print(F("emptyQueue\n"));
+//  dbgSerial.print(F("emptyQueue\n"));
 #endif  //  SHOW_EACH_EVENT
 
     digitalWrite(13, LOW);

@@ -209,6 +209,7 @@ void timerObj_EventHandler(eventQueue_t* event)
             Data2 is timer duration
         */
         startTimer((event_t)event->data1, event->data2, false);
+//      dbgSerial.print(F("StartTimer\n"));
         break;
 
     case timerEvt_startPeriodicTimer:
@@ -216,12 +217,14 @@ void timerObj_EventHandler(eventQueue_t* event)
             Data2 is timer duration
         */
         startTimer((event_t)event->data1, event->data2, true);
+//      dbgSerial.print(F("StartPeriodicTimer\n"));
         break;
 
     case timerEvt_cancelTimer:
         /*  Data1 is event ID to cancel
         */
         cancelTimer((event_t)event->data1);
+//      dbgSerial.print(F("cancelTimer\n"));
         break;
 
     case timerEvt_setTimerData1:

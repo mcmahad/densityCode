@@ -51,6 +51,7 @@ void loadCellObj_EventHandler(eventQueue_t* event)
     switch (event->eventId)
     {
     case loadCellEvt_ScreenTestTimeout:
+        dbgSerial.println(F("screenTestTimeout"));
         {
             static  int   screenNumber;
 
@@ -73,6 +74,10 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
 
     case loadCellEvt_RestartLoadCell:
+        if (0)
+        {
+            dbgSerial.println(F("restartLoadCell"));
+        }
         /*  This event will re-init the entire load cell.  It sets a timeout for measurement reporting
          *   and will restart the loadcell with this event if there is no measurement.
          *
@@ -92,6 +97,10 @@ void loadCellObj_EventHandler(eventQueue_t* event)
 
     case loadCellEvt_InitializeLoadCell:
         //   Nothing really to do in this event, it could be removed
+        if (0
+        {
+            dbgSerial.println(F("initLoadCell"));
+        }
         sendEvent(loadCellEvt_PowerUpLoadCell, 0, 0);
         break;
 
@@ -104,13 +113,19 @@ void loadCellObj_EventHandler(eventQueue_t* event)
          */
         if (scalePtr->power_up())
         {
-//          dbgSerial.println(F("LoadCell power up"));
+            if (0)
+            {
+                dbgSerial.println(F("LoadCell power up"));
+            }
             /*  Power did turn on, so schedule offset calibration for the amplifier in 600 mSec  */
             sendEvent(timerEvt_startTimer,    loadCellEvt_CalibrateAmplifierOffset, 600);
         }
         else
         {
-//          dbgSerial.println(F("LoadCell didn't power up"));
+            if (0)
+            {
+                dbgSerial.println(F("LoadCell already powered, no calibration needed"));
+            }
         }
 
         /*  The analyzer says this takes XXX mSec and that XXX for delay is the best choice.
@@ -123,6 +138,10 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
 
     case loadCellEvt_WaitForLoadCellReady:
+        if (0)
+        {
+            dbgSerial.println(F("waitForLoadCellReady"));
+        }
         if (scalePtr->is_ready())
         {
             scalePtr->set_FirstDelay(scalePtr->get_FirstDelay() - 1);
@@ -141,6 +160,10 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
 
     case loadCellEvt_StartLoadCellCollection:
+        if (0)
+        {
+            dbgSerial.println(F("startLoadCellCollection"));
+        }
         /*
          *   Shift 24 bits of data out of the ADC.
          */
@@ -167,6 +190,7 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
 
     case loadCellEvt_PrintCellWeight:
+        dbgSerial.println(F("printCellWeight"));
 #ifdef  DONT_DO
         dbgSerial.print(F("Raw="));
         dbgSerial.print(scalePtr->rawMsmt_cnts);
@@ -196,6 +220,7 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
 
     case loadCellEvt_SetFilterWeightingPctg:
+        dbgSerial.println(F("setFilterWeightingPctg"));
         scalePtr->setFilterWeightPctg(event->data1);
 #ifdef  DONT_DO
         dbgSerial.print(F("SetWeighting:"));
@@ -204,12 +229,14 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
 
     case loadCellEvt_CalibrateAmplifierOffset:
+        dbgSerial.println(F("calibrateAmplifierOffset"));
             dbgSerial.println(F("LoadCell calibrateOffset"));
         scalePtr->calibrate_offset();
         break;
 
     case loadCellEvt_CalibrateWeight:
         /*  data1 : truth weight current on scale, in grams  */
+        dbgSerial.println(F("calibrateWeight"));
 
         scalePtr->set_scale(event->data1);
 
@@ -236,3 +263,4 @@ void loadCellObj_EventHandler(eventQueue_t* event)
         break;
     }
 }
+
