@@ -356,7 +356,7 @@ int main(int argc, char **argv)
     forceCalPointPair(3, 2, 33446, 353);        //  Weight
 #endif  //  DAVE_20220629_REPEATED2_SAME_PIECE
 
-#define DAVE_20220629_30Second_REPEATED_SAME_PIECE
+//#define DAVE_20220629_30Second_REPEATED_SAME_PIECE
 #ifdef  DAVE_20220629_30Second_REPEATED_SAME_PIECE
 
     //  This is for "30SecondOnFastOffLongLog.txt"
@@ -399,6 +399,30 @@ int main(int argc, char **argv)
     forceCalPointPair(3, 0, 0, 0);
 #endif  //  ROSS_2022_07_14_RossWeightTestOnBrokenSystem
 
+#define DAVE_2022_09_26_WeightStabilitySensor1Only_4th
+#ifdef  DAVE_2022_09_26_WeightStabilitySensor1Only_4th
+
+    //  This is for "WeightStabilitySensor1Only-4th.log"
+    setCurrentTarePoint(0, 8101602);     //  Set tare so we can add calibrations
+    forceCalPointPair(0, 0, 0, 0);
+    forceCalPointPair(0, 1, -592717, 48);
+    forceCalPointPair(0, 2, -3515794, 285);
+
+    setCurrentTarePoint(1, 3666459);            //  Set tare so we can add calibrations
+    forceCalPointPair(1, 0, 0, 0);
+    forceCalPointPair(1, 1, -345946,  48);      //  Width
+    forceCalPointPair(1, 2, -868033, 122);      //  Width
+
+    setCurrentTarePoint(2, 4554901);            //  Set tare so we can add calibrations
+    forceCalPointPair(2, 0, 0, 0);
+
+    setCurrentTarePoint(3, -11627);             //  Set tare so we can add calibrations
+    forceCalPointPair(3, 0, 0, 0);
+    forceCalPointPair(3, 1, 8630, 77);
+    forceCalPointPair(3, 2, 39986, 351);
+#endif  //  DAVE_2022_09_26_WeightStabilitySensor1Only_4th
+
+
 
 
     sendEvent(msmtMgrEvt_EnableFinalReports, 0, 0);
@@ -440,12 +464,22 @@ int main(int argc, char **argv)
 
         }
 
-        if (eventTimestamp >= 289022)
+        if (eventTimestamp >= 22095)
         {
             printf("");
         }
 
-        if (eventTimestamp == 289022)
+        if (eventTimestamp >= 56000)
+        {
+            printf("");
+        }
+
+        if (eventTimestamp >= 55535)
+        {
+            printf("");
+        }
+
+        if (eventTimestamp >= 118382)
         {
             printf("");
         }
@@ -454,11 +488,15 @@ int main(int argc, char **argv)
         {
             int32_t     calData;
             int         scanCnt = sscanf(inputLine, ":,%d,%d,%d,%d,%d", &msgType, &eventTimestamp, &data1, &data2, &calData);
-            if (3 == scanCnt  ||  4 == scanCnt)
+            if (3 == scanCnt  ||  4 == scanCnt  ||  5 == scanCnt)
             {
                 switch (msgType)
                 {
                 case 1:
+                    if (data2 != 3)
+                    {
+                        printf("");
+                    }
                     sendEvent(msmtMgrEvt_ReportRawSensorMsmt, data1, data2);
                     break;
 
@@ -489,6 +527,11 @@ int main(int argc, char **argv)
                     setTareMark(sensorType_DistanceHeight);
                     setTareMark(sensorType_DistanceLength);
                     setTareMark(sensorType_Weight);
+                    break;
+
+                case 6:     //  Report actual raw and filtered values for logging and confirmation that win32 matches arduino
+                            //  This reports the testId sensor only
+                    setReportedRawAndFilteredValues(data1, data2);
                     break;
                 }
                 processEvents();

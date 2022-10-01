@@ -39,15 +39,15 @@ int getLineCnt(void);
 
 #define MASTER_SCALER       3
 #define MAX_DIVISOR_SCALING_LIMIT   (MASTER_SCALER * 900 )
-#define FILTER_INCREASE_COUNT       (MASTER_SCALER *  72 )
-#define FILTER_RELEASE_COUNT        (MASTER_SCALER * 150)
+#define FILTER_INCREASE_COUNT       (MASTER_SCALER *  20 )
+#define FILTER_RELEASE_COUNT        (MASTER_SCALER * 300)
 
 #define UNASSIGNED_STDEV_START      -999999999
 #define POST_SERIAL_PAUSE_MSEC       0
 
 #ifdef  _WIN32
 //  #define sensorType_Test     sensorType_DistanceWidth
-#define sensorType_Test     sensorType_DistanceLength
+#define sensorType_Test     sensorType_Weight
 #else   //  _WIN32
 #define sensorType_Test    100
 #endif  //  _WIN32
@@ -96,81 +96,99 @@ typedef enum
     measState_measuring,
 } measuringState_t;
 
+
+
+
+
+
 class tareHistory_t
 {
 private:
-static    const   int     entryCnt = 20;
+    static    const   int     entryCnt = 20;
 
     int16_t     itemCnt;
     int32_t     buffer[entryCnt],
-                *headPtr,
-                *tailPtr,
-                sensorIndex;
+        * headPtr,
+        * tailPtr,
+        sensorIndex;
 public:
-tareHistory_t()
-{
-    headPtr = buffer;
-    tailPtr = buffer;
-    memset(buffer, 0, sizeof(buffer));
-}
-
-void add(int32_t newTare)
-{
-    *headPtr = newTare;
-    if (++headPtr >= &buffer[entryCnt]) headPtr = buffer;
-    itemCnt++;
-
-    if (*headPtr == -3)
+    tareHistory_t()
     {
-        printf("");
+        headPtr = buffer;
+        tailPtr = buffer;
+        memset(buffer, 0, sizeof(buffer));
     }
 
-    //  Move the tailPtr along
-    if (headPtr == tailPtr)
+    void add(int32_t newTare)
     {
-        itemCnt--;
-        if (++tailPtr >= &buffer[entryCnt])
+        *headPtr = newTare;
+        if (++headPtr >= &buffer[entryCnt]) headPtr = buffer;
+        itemCnt++;
+
+        if (*headPtr == -3)
         {
-            tailPtr = buffer;
+            printf("");
+        }
+
+        //  Move the tailPtr along
+        if (headPtr == tailPtr)
+        {
+            itemCnt--;
+            if (++tailPtr >= &buffer[entryCnt])
+            {
+                tailPtr = buffer;
+            }
         }
     }
-}
 
-void clear(int32_t newTare)
+    void clear(int32_t newTare)
+    {
+        headPtr = buffer;
+        tailPtr = buffer;
+        itemCnt = 0;
+        memset(buffer, 0, sizeof(buffer));
+        if (newTare != 0) add(newTare);
+    }
+
+    int32_t getOldest(void)
+    {
+        int32_t     returnValue = *tailPtr;
+
+        //  If history is empty, return the current filtered value
+        if (headPtr == tailPtr) returnValue = filteredSensorReading[sensorIndex];
+
+        if (returnValue == -36)
+        {
+            printf("");
+        }
+
+        return returnValue;
+    }
+
+    int32_t getItemCount(void)
+    {
+        return itemCnt;
+    }
+
+    void setSensorIndex(int32_t thisIndex)
+    {
+        sensorIndex = thisIndex;
+    }
+};
+
+int32_t lastReportedRawValue,
+        lastReportedFilteredValue;
+
+void setReportedRawAndFilteredValues(int32_t reportedRawValue, uint32_t reportedFilteredValue)
 {
-    headPtr = buffer;
-    tailPtr = buffer;
-    itemCnt = 0;
-    memset(buffer, 0, sizeof(buffer));
-    if (newTare != 0) add(newTare);
-}
+    lastReportedRawValue      = reportedRawValue;
+    lastReportedFilteredValue = reportedFilteredValue;
 
-int32_t getOldest(void)
-{
-    int32_t     returnValue = *tailPtr;
-
-    //  If history is empty, return the current filtered value
-    if (headPtr == tailPtr) returnValue = filteredSensorReading[sensorIndex];
-
-    if (returnValue == -36)
+    if (lastReportedRawValue > -11200)
     {
         printf("");
     }
-
-    return returnValue;
 }
-
-int32_t getItemCount(void)
-{
-    return itemCnt;
-}
-
-void setSensorIndex(int32_t thisIndex)
-{
-    sensorIndex = thisIndex;
-}
-
-};
 
 
 tareHistory_t           tareHistory           [sensorType_MaxSensors];
@@ -259,8 +277,13 @@ public:
     void    setSensorId(int16_t myNewSensorIndex);
     int32_t getNoiseEstimate(void);
     int32_t getStdDeviation_x100(void);
+
+    int32_t getShortNoiseEstimate(void);
+    int32_t getShortStdDeviation_x100(void);
+    int32_t getShortRecentAverage(void);
+
     int32_t getRecentAverage(void);
-    int32_t currentSampleCount(void);
+    int32_t currentSampleCount(void); //  goes up to >20
     void    trimOldIfNeeded(void);
     void    noiseTest(void);
 };
@@ -302,7 +325,6 @@ void shortNoiseEstimater::addNewValue(int32_t newValue)
     }
     else
     {
-
         countOfEntries++;
     }
     sumOfSquares = sumOfSquares + newValueSquared_64b;
@@ -322,14 +344,24 @@ void shortNoiseEstimater::addNewValue(int32_t newValue)
 
     /*  This is keeps a std dev for a shorter history.
         If the short and long std dev histories are both
-        individually low but the compplete deviation is
+        individually low but the complete deviation is
         large, then we have found a step change and can
         delete the oldest history while keeping some of the
         newest
     */
     if (shortCountOfEntries >= shortHistoryDepth)
     {
-        shortSumOfSquares -= (int32_t)oldValueSquared_64b;
+        int      oldShortIndex   = shortCountOfEntries;     //  Never >= shortHistoryDepth
+        int32_t *ShortRemovalPtr = historyFillPtr - shortHistoryDepth;
+
+        if (ShortRemovalPtr < historyBuffer) ShortRemovalPtr += historyDepth;   //  Gotta add the size of the full buffer
+
+        //  Figure out what the old values are from the history buffer
+        oldValue_64b        = (int64_t)*ShortRemovalPtr,
+        oldValueSquared_64b = oldValue_64b * oldValue_64b;
+
+        //  Remove the old values
+        shortSumOfSquares -= oldValueSquared_64b;
         shortSumOfEntries -= (int32_t)oldValue_64b;
     }
     else
@@ -438,9 +470,12 @@ void shortNoiseEstimater::trimOldIfNeeded(void)
 
 void shortNoiseEstimater::resetNoiseEstimate(void)
 {
-    sumOfSquares   = 0;
-    sumOfEntries   = 0;
-    countOfEntries = 0;
+    sumOfSquares        = 0;
+    sumOfEntries        = 0;
+    countOfEntries      = 0;
+    shortSumOfSquares   = 0;
+    shortSumOfEntries   = 0;
+    shortCountOfEntries = 0;
     historyFillPtr = historyBuffer;
     memset(historyBuffer, 0, sizeof(historyBuffer));        //  Not needed, cosmetic for debug only
     if (1  &&  mySensorIndex == sensorType_Test)
@@ -509,6 +544,7 @@ int32_t shortNoiseEstimater::getNoiseEstimate(void)
 
 
     returnValue_64b  = (int64_t)countOfEntries * sumOfSquares - (int64_t)(sumOfEntries_64b * sumOfEntries_64b);
+    returnValue_64b += (countOfEntries * (countOfEntries - 1)) / 2;    //  Round up here, before dividing
     returnValue_64b /= (int64_t)countOfEntries;
     returnValue_64b /= (int64_t)countOfEntries - 1;
 
@@ -551,6 +587,101 @@ int32_t shortNoiseEstimater::getRecentAverage(void)
     if (countOfEntries >= 1)
     {
         return sumOfEntries / countOfEntries;
+    }
+    return 0;
+}
+
+
+int32_t shortNoiseEstimater::getShortNoiseEstimate(void)
+{
+    /*  This function returns the variance (stdDev^2)
+    */
+    int64_t     returnValue_64b,
+                sumOfEntries_64b = (uint64_t)shortSumOfEntries;
+
+    int32_t     returnValue;
+
+    int32_t     *mostRecentValPtr = historyFillPtr;
+
+    mostRecentValPtr--;
+    if (mostRecentValPtr < historyBuffer)
+    {
+        mostRecentValPtr += historyDepth;
+    }
+
+    if (0)
+    {
+        dbgSerial.print(F("GetShortNoiseEst() : "));
+        dbgSerial.print((int32_t)*mostRecentValPtr);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((int32_t)shortCountOfEntries);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((int32_t)sumOfEntries_64b);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((int32_t)(shortSumOfSquares >> 32), HEX);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((int32_t)shortSumOfSquares, HEX);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((int32_t)shortSumOfSquares);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((int32_t)shortSumOfSquares, 2);
+        dbgSerial.println();
+    }
+
+    if (countOfEntries < 10)
+    {   //  Not enough samples, just return some large value
+//      dbgSerial.print(F("getNoiseEst() Not enough entries - "));
+//      dbgSerial.print(countOfEntries);
+//      dbgSerial.println();
+
+        return 1000000001;
+    }
+
+
+    returnValue_64b  = (int64_t)shortCountOfEntries * shortSumOfSquares - (int64_t)(sumOfEntries_64b * sumOfEntries_64b);
+    returnValue_64b += (shortCountOfEntries * (shortCountOfEntries - 1)) / 2;    //  Round up here, before dividing
+    returnValue_64b /= (int64_t)shortCountOfEntries;
+    returnValue_64b /= (int64_t)shortCountOfEntries - 1;
+
+    if (returnValue_64b > 1000000000)
+    {   //  The value won't fit in a 32-bit return value range, so just give back something huge
+        return 1000000002;
+    }
+
+    returnValue = (int32_t)returnValue_64b;
+    if (returnValue >= 10000  ||  returnValue < 0  ||  shortSumOfSquares < 0)
+    {
+//      dbgSerial.print(F("Noise Computed too big "));
+//      dbgSerial.print(returnValue);
+//      dbgSerial.println();
+    }
+    else
+    {
+//      dbgSerial.print(F("Noise Computed fine "));
+//      dbgSerial.println(returnValue);
+    }
+    return returnValue;
+}
+
+
+int32_t shortNoiseEstimater::getShortStdDeviation_x100(void)
+{
+    int64_t     noiseEstimate = getShortNoiseEstimate();
+
+    if (noiseEstimate < 20000000)
+    {
+        //  Convert scaled variance to stdDev x 100
+        return (int32_t)sqrt((double)(noiseEstimate * 10000));
+    }
+    return 100000002;
+}
+
+
+int32_t shortNoiseEstimater::getShortRecentAverage(void)
+{
+    if (shortCountOfEntries >= 1)
+    {
+        return shortSumOfEntries / shortCountOfEntries;
     }
     return 0;
 }
@@ -1022,8 +1153,11 @@ void msmtMgrObj_EventHandler(eventQueue_t* event)
         {
             rawSensorReportsEnable[(int)(event->data1)] = true;
 
-//          dbgSerial.print(F("Enabling raw sensor #"));
-//          dbgSerial.println(event->data1);
+            if (0)
+            {
+                dbgSerial.print(F("Enabling raw sensor #"));
+                dbgSerial.println(event->data1);
+            }
         }
         break;
 
@@ -1104,6 +1238,21 @@ static      int8_t      colorIndex   = 0;
                     }
                 }
             }
+#ifndef _WIN32
+            if (1)
+                if (shouldShowCsvForDebug())
+                {
+                    //  report raw and filtered readings we actually view to a log file
+                    dbgSerial.print  (F(":,"));
+                    dbgSerial.print  (6);
+                    dbgSerial.print  (F(","));
+                    dbgSerial.print  (millis());
+                    dbgSerial.print  (F(","));
+                    dbgSerial.println((int32_t)currentRawSensorReading[sensorType_Weight]);
+                    dbgSerial.print  (F(","));
+                    dbgSerial.print  ((int32_t)filteredSensorReading[sensorType_Weight]);
+                }
+#endif      //  _WIN32
 
             //  Compute density in grams per cubic meter
             float   denominator = ((float)lastDisplayedValue[sensorType_DistanceLength] *
@@ -1387,10 +1536,10 @@ static      int8_t      colorIndex   = 0;
 
 #ifdef  _WIN32
             //  This reports data for a density calculation
-            if (1)
+            if (0)
             {
                 int     csvLineNumber = getLineCnt();
-static          bool    showHeader = true;
+static          bool    showDensityHeader = true;
 
 
                 if (csvLineNumber == 512)
@@ -1398,9 +1547,9 @@ static          bool    showHeader = true;
                     printf("");
                 }
 
-                if (showHeader)
+                if (showDensityHeader)
                 {
-                    showHeader = false;
+                    showDensityHeader = false;
                     printf("\n:CSV"
                         ",timestamp"
                         ",LineNum"
@@ -1730,6 +1879,11 @@ static          bool    showHeader = true;
                 stdDeviationThreshold = 6;
             }
 
+            if (sensorIndex == sensorType_Test)
+            {   //  Breakpoint for a NOP
+                printf("");
+            }
+
             //  Add a rule that if number of standard deviations away from raw is high, filtered is just replace with average, but only
             //  if taring or measuring
 //          if ((rawSampleNoiseEstimate[sensorIndex].currentSampleCount() > 10) &&
@@ -1759,7 +1913,9 @@ static          bool    showHeader = true;
                 {
                     printf("");
                 }
-                if (myCurrentSampleCount > 20)
+
+                //  TODO - Maybe use this window only for lasers?  Load cells need to do this
+                if (myCurrentSampleCount > 40)
                 {   //  The window has passed, don't use taring strategy
                     useThisSensor = false;
                     applyLinearCorrection = true;
@@ -2721,14 +2877,14 @@ static          bool    showHeader = true;
 
 #ifdef _WIN32
             //  This reports data for a single sensor measurement
-            if (0  &&  sensorType_Test >= sensorType_First  &&  sensorType_Test < sensorType_MaxSensors  &&  sensorType_Test == sensorIndex)
+            if (1  &&  sensorType_Test >= sensorType_First  &&  sensorType_Test < sensorType_MaxSensors  &&  sensorType_Test == sensorIndex)
             {
                 int     csvLineNumber = getLineCnt();
-static          bool    showHeader    = true;
+static          bool    showSensorHeader    = true;
 
-                if (showHeader)
+                if (showSensorHeader)
                 {
-                    showHeader = false;
+                    showSensorHeader = false;
                     printf("\n:CSV"
                         ",timestamp"
                         ",LineNum"
@@ -2740,24 +2896,28 @@ static          bool    showHeader    = true;
                         ",LastDisplayedTareState"
                         ",SteadyValCnt"
 //                      ",Numerator"
-                        ",Denominator"
+                        ",Denominator"              //   9
                         ",isIdentical"
-                        ",scalingPctg"
+                        ",scalingPctg"              //  11
                         ",quantLimit"
-                        ",sameDirNudge"
+                        ",sameDirNudge"             //  13
                         ",measStateGain"
-                        ",isIdenticalCnt"
+                        ",isIdenticalCnt"           //  15
                         ",beyond10Cnt"
-                        ",Spare-unused"
+                        ",Numerator"                //  17
                         ",Density"
-                        ",DisplayValLength"
+                        ",DisplayValLength"         //  19
                         ",DisplayValWidth"
-                        ",DisplayValHeight"
+                        ",DisplayValHeight"         //  21
                         ",DisplayValWeight"
+                        ",reportedRaw"              //  23
+                        ",reportedfiltered"
+                        ",lowNoiseGainMultiplier"   //  25
+                        ",sameDirectionGainMultiplier"
                         "\n"
                     );
-                }   //            0  1     3     5     7       9 10 11    13    15    17    19    21
-                printf("\n:CSV,%06d,%d,%d,%d,%d,%d,%d,%d,%d,%lld,%d,%d,%d,%d,%d,%d,%d,%d,%f,%d,%d,%d,%d\n",
+                }   //            0  1     3     5     7       9 10 11    13    15      17    19    21    23    25
+                printf("\n:CSV,%06d,%d,%d,%d,%d,%d,%d,%d,%d,%lld,%d,%d,%d,%d,%d,%d,%d,%lld,%f,%d,%d,%d,%d,%d,%d,%d,%d\n",
                     millis(),                                     //    0
                     csvLineNumber++,                              //    1
                     currentRawSensorReading[sensorType_Test],     //    2
@@ -2776,12 +2936,16 @@ static          bool    showHeader    = true;
                     measStateGain[sensorType_Test],               //   14
                     newValueIsIdenticalCnt[sensorType_Test],      //   15
                     newValueBeyond10Cnt[sensorType_Test],         //   16
-                    0,                                            //  Just a placeholder, relace it - 17
+                    numerator,                                    //   17
                     totalDensity_kgPerMeter3,                     //   18
                     findYFromCalibration(sensorType_DistanceLength, filteredSensorReading[sensorType_DistanceLength]),   //  19
                     findYFromCalibration(sensorType_DistanceWidth,  filteredSensorReading[sensorType_DistanceWidth]),    //  20
                     findYFromCalibration(sensorType_DistanceHeight, filteredSensorReading[sensorType_DistanceHeight]),   //  21
-                    findYFromCalibration(sensorType_Weight,         filteredSensorReading[sensorType_Weight])            //  22
+                    findYFromCalibration(sensorType_Weight,         filteredSensorReading[sensorType_Weight]),           //  22
+                    lastReportedRawValue,                         //   23
+                    lastReportedFilteredValue,                    //   24
+                    lowNoiseGainMultiplier ,                      //   25
+                    sameDirectionGainMultiplier                   //   26
                 );
                 showTareMark[sensorType_Test] = 0;
             }

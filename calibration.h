@@ -14,10 +14,10 @@ typedef     int  sensorType_t;
 
 const       int     sensorType_First = 0,
                     sensorType_DistanceLength = 0,
-                    sensorType_DistanceWidth = 1,       //  3 laser displacement measurements
+                    sensorType_DistanceWidth  = 1,       //  3 laser displacement measurements
                     sensorType_DistanceHeight = 2,
-                    sensorType_Weight = 3,              //  1 load cell
-                    sensorType_MaxSensors = 4;
+                    sensorType_Weight         = 3,       //  1 load cell
+                    sensorType_MaxSensors     = 4;
 
 
 
