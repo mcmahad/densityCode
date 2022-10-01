@@ -40,7 +40,7 @@ int getLineCnt(void);
 #define MASTER_SCALER       3
 #define MAX_DIVISOR_SCALING_LIMIT   (MASTER_SCALER * 900 )
 #define FILTER_INCREASE_COUNT       (MASTER_SCALER *  20 )
-#define FILTER_RELEASE_COUNT        (MASTER_SCALER * 300)
+#define FILTER_RELEASE_COUNT        (MASTER_SCALER * 225 )
 
 #define UNASSIGNED_STDEV_START      -999999999
 #define POST_SERIAL_PAUSE_MSEC       0
@@ -256,7 +256,7 @@ class shortNoiseEstimater
     The sumOfEntries must hold 30-bit values (24-bits, 40 values)
 */
 public:
-static  const   int     shortHistoryDepth = 10;
+static  const   int     shortHistoryDepth = 8;
 static  const   int     historyDepth = 40;
 
 private:
@@ -264,11 +264,11 @@ private:
                         *historyFillPtr;
                 int64_t sumOfSquares;
                 int32_t sumOfEntries;
-                int16_t countOfEntries;     //  Never >= historyDepth
+                int16_t countOfEntries;     //  Range: [0..historyDepth]
 
                 int64_t shortSumOfSquares;
                 int32_t shortSumOfEntries;
-                int16_t shortCountOfEntries;     //  Never >= 10
+                int16_t shortCountOfEntries;     //  Range: [0..shortHistoryDepth]
                 int16_t mySensorIndex;
 public:
             shortNoiseEstimater();
@@ -533,7 +533,7 @@ int32_t shortNoiseEstimater::getNoiseEstimate(void)
         dbgSerial.println();
     }
 
-    if (countOfEntries < 10)
+    if (countOfEntries < shortHistoryDepth)
     {   //  Not enough samples, just return some large value
 //      dbgSerial.print(F("getNoiseEst() Not enough entries - "));
 //      dbgSerial.print(countOfEntries);
@@ -628,7 +628,7 @@ int32_t shortNoiseEstimater::getShortNoiseEstimate(void)
         dbgSerial.println();
     }
 
-    if (countOfEntries < 10)
+    if (shortCountOfEntries < shortHistoryDepth)
     {   //  Not enough samples, just return some large value
 //      dbgSerial.print(F("getNoiseEst() Not enough entries - "));
 //      dbgSerial.print(countOfEntries);
@@ -636,7 +636,6 @@ int32_t shortNoiseEstimater::getShortNoiseEstimate(void)
 
         return 1000000001;
     }
-
 
     returnValue_64b  = (int64_t)shortCountOfEntries * shortSumOfSquares - (int64_t)(sumOfEntries_64b * sumOfEntries_64b);
     returnValue_64b += (shortCountOfEntries * (shortCountOfEntries - 1)) / 2;    //  Round up here, before dividing
@@ -1826,7 +1825,7 @@ static          bool    showDensityHeader = true;
             numerator   = filterScaling_Pctg[sensorIndex];
             denominator = quantizationLimit [sensorIndex];
 
-            currentNoiseEstimate = rawSampleNoiseEstimate[sensorIndex].getNoiseEstimate();
+            currentNoiseEstimate = rawSampleNoiseEstimate[sensorIndex].getShortNoiseEstimate();
             if (currentNoiseEstimate > 0)
             {
                 lowNoiseGainMultiplier = 400 / currentNoiseEstimate;  //  Heuristically determined
@@ -2136,8 +2135,9 @@ static          bool    showDensityHeader = true;
             if (0  &&  sensorIndex == noiseRptActiveSensor  &&  (int32_t)rawSampleNoiseEstimate[sensorIndex].getNoiseEstimate() < 100000)
             {
                 static  int8_t     printed = 0;
-                if (!printed++)
+                if (!printed)
                 {
+                    printed++;
 //                  dbgSerial.print("Delta Numerator Denominator Noise^2 Noise SameDirGain LoNoiseGain" );
                     dbgSerial.print("Numerator Denominator SameDirGain LoNoiseGain FullClock fraction");
                     dbgSerial.println();
