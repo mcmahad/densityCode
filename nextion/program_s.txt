@@ -1,0 +1,27 @@
+// and power on initialization data.  Remember : At the moment only int 32 bit signed integers are supported
+// (in the Project Start Up code section).   Additionally project start up code can be added in this section to
+//  be run before the HMI runs using Nextion Instructions.
+//  When in active Protocol Reparse mode, incoming serial data will not be processed natively by the Nextion
+// firmware but will wait in the serial buffer for  processing. To exit active Protocol Reparse mode, recmod must
+//  be set back to passive (ie: in Nextion logic as recmod=0),  which can not be achieved via serial
+//At present, the definition of global variable only supports 4-byte signed integer (int), and other types
+//of global quantity declaration are not supported.
+if(baud!=38400)
+{
+  bauds=38400
+  baud=38400
+}
+
+usup=1
+recmod=0
+if(dim!=100)
+{
+    dims=100
+    dim=100
+}
+//    This must be the last command
+//  Set which page Nextion loads when exiting sleep mode
+wup=2
+usup=2
+page Start                       //begin with page 0
+
