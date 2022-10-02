@@ -514,16 +514,16 @@ int32_t shortNoiseEstimater::getNoiseEstimate(void)
 
     int32_t     returnValue;
 
-    int32_t     *mostRecentValPtr = historyFillPtr;
-
-    mostRecentValPtr--;
-    if (mostRecentValPtr < historyBuffer)
-    {
-        mostRecentValPtr += historyDepth;
-    }
-
     if (0)
     {
+        int32_t* mostRecentValPtr = historyFillPtr;
+
+        mostRecentValPtr--;
+        if (mostRecentValPtr < historyBuffer)
+        {
+            mostRecentValPtr += historyDepth;
+        }
+
         dbgSerial.print(F("GetNoiseEst() : "));
         dbgSerial.print((int32_t)*mostRecentValPtr);
         dbgSerial.print(F(" "));
@@ -609,16 +609,16 @@ int32_t shortNoiseEstimater::getShortNoiseEstimate(void)
 
     int32_t     returnValue;
 
-    int32_t     *mostRecentValPtr = historyFillPtr;
-
-    mostRecentValPtr--;
-    if (mostRecentValPtr < historyBuffer)
-    {
-        mostRecentValPtr += historyDepth;
-    }
-
     if (0)
     {
+        int32_t* mostRecentValPtr = historyFillPtr;
+
+        mostRecentValPtr--;
+        if (mostRecentValPtr < historyBuffer)
+        {
+            mostRecentValPtr += historyDepth;
+        }
+
         dbgSerial.print(F("GetShortNoiseEst() : "));
         dbgSerial.print((int32_t)*mostRecentValPtr);
         dbgSerial.print(F(" "));
@@ -644,7 +644,6 @@ int32_t shortNoiseEstimater::getShortNoiseEstimate(void)
 
         return 1000000001;
     }
-
     returnValue_64b  = (int64_t)shortCountOfEntries * shortSumOfSquares - (int64_t)(sumOfEntries_64b * sumOfEntries_64b);
     returnValue_64b += (shortCountOfEntries * (shortCountOfEntries - 1)) / 2;    //  Round up here, before dividing
     returnValue_64b /= (int64_t)shortCountOfEntries;
@@ -899,6 +898,53 @@ void msmtMgrObj_Initialize(void)
     disableCalibrationCalcPrinting();
 #endif // !_WIN32
 
+
+#ifdef  _WIN32
+    if (0)
+    {
+        const int32_t     testVector[] =
+        {
+            5614382, 5614384, 5614047, 5614385, 5614387,
+            5614404, 5614406, 5614405, 5614397, 5610549,
+            5608921, 5608253, 5608259, 5608274, 5608264,
+            5608270, 5608276, 5608269, 5609421, 5609605,
+            5609035, 5608263, 5610226, 5609054, 5609044,
+            5608890, 5609101, 5610395, 5608278, 5608278,
+            5609618, 5608287, 5608670, 5609141, 5609618,
+            5609429, 5608909, 5608280, 5609060,
+
+            5614382, 5614384, 5614047, 5614385, 5614387,
+            5614404, 5614406, 5614405, 5614397, 5610549,
+            5608921, 5608253, 5608259, 5608274, 5608264,
+            5608270, 5608276, 5608269, 5609421, 5609605,
+            5609035, 5608263, 5610226, 5609054, 5609044,
+            5608890, 5609101, 5610395, 5608278, 5608278,
+            5609618, 5608287, 5608670, 5609141, 5609618,
+            5609429, 5608909, 5608280, 5609060
+        };
+        int32_t     itemCount = 0,
+                    stdDevx100,
+                    index;
+
+        rawSampleNoiseEstimate[0].resetNoiseEstimate();
+
+        for (index = 0; index < shortNoiseEstimater::shortHistoryDepth - 1; index++)
+        {
+            rawSampleNoiseEstimate[0].addNewValue(testVector[index]);
+            itemCount++;
+        }
+
+        index = 0;
+        for (index = shortNoiseEstimater::shortHistoryDepth - 1; index < sizeof(testVector)/sizeof(testVector[0]); index++)
+        {
+            rawSampleNoiseEstimate[0].addNewValue(testVector[index]);
+            itemCount++;
+            stdDevx100 = rawSampleNoiseEstimate[0].getShortNoiseEstimate();
+            printf("%d, %d\n", itemCount, stdDevx100);
+            printf("");
+        }
+    }
+#endif  //  _WIN32
 }
 
 
@@ -1854,7 +1900,7 @@ static          bool    showDensityHeader = true;
             }
 
             //  Enforce sanity limits
-            sameDirectionNudge[sensorIndex] = max(-150, min(150, sameDirectionNudge[sensorIndex]));
+            sameDirectionNudge[sensorIndex] = max(-120, min(120, sameDirectionNudge[sensorIndex]));
             filterScaling_Pctg[sensorIndex] = max(   1, min(quantizationLimit[sensorIndex] - 1, filterScaling_Pctg[sensorIndex]));
 
             /*  The noise estimate is really variance (standard deviation squared).
@@ -1901,7 +1947,7 @@ static          bool    showDensityHeader = true;
                 dbgSerial.println(sameDirectionGainMultiplier);
             }
 
-            int32_t     stdDevToUse = rawSampleNoiseEstimate[sensorIndex].getStdDeviation_x100(),
+            int32_t     stdDevToUse = rawSampleNoiseEstimate[sensorIndex].getShortStdDeviation_x100(),
                         deltaToUse  = labs((int32_t)(delta_x32 >> 32));
 
             bool        applyLinearCorrection = true;
@@ -1923,7 +1969,7 @@ static          bool    showDensityHeader = true;
             //  Add a rule that if number of standard deviations away from raw is high, filtered is just replace with average, but only
             //  if taring or measuring
 //          if ((rawSampleNoiseEstimate[sensorIndex].currentSampleCount() > 10) &&
-            if ((myCurrentSampleCount > 10) &&
+            if ((myCurrentSampleCount >= shortNoiseEstimater::shortHistoryDepth) &&
                ((100 * deltaToUse) > (stdDeviationThreshold * stdDevToUse))  &&
                 (taringState[sensorIndex] == measState_taring  ||  taringState[sensorIndex] == measState_measuring))
             {
@@ -1982,7 +2028,7 @@ static          bool    showDensityHeader = true;
 
                     //  We are more than four std Deviations away, so the average raw value is better than any
                     //  filtered value we will compute.  Use the average raw sample value as the new filtered value
-                    int32_t     newFilterSensorReading = rawSampleNoiseEstimate[sensorIndex].getRecentAverage(),
+                    int32_t     newFilterSensorReading = rawSampleNoiseEstimate[sensorIndex].getShortRecentAverage(),
                                 filterDifference       = newFilterSensorReading - filteredSensorReading[sensorIndex],
                                 newTarePoint           = getCalTarePoint(sensorIndex) + filterDifference;
 
