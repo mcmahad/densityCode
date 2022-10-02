@@ -40,14 +40,22 @@ int getLineCnt(void);
 #define MASTER_SCALER       3
 #define MAX_DIVISOR_SCALING_LIMIT   (MASTER_SCALER * 900 )
 #define FILTER_INCREASE_COUNT       (MASTER_SCALER *  20 )
-#define FILTER_RELEASE_COUNT        (MASTER_SCALER * 225 )
+#define FILTER_INCREASE_COUNT_LENGTH (MASTER_SCALER *  10 )
+#define FILTER_INCREASE_COUNT_WIDTH  (MASTER_SCALER *  10 )
+#define FILTER_INCREASE_COUNT_HEIGHT (MASTER_SCALER *  10 )
+#define FILTER_INCREASE_COUNT_WEIGHT (MASTER_SCALER *  20 )
+
+#define FILTER_RELEASE_COUNT_LENGTH (MASTER_SCALER * 150 )
+#define FILTER_RELEASE_COUNT_WIDTH  (MASTER_SCALER * 150 )
+#define FILTER_RELEASE_COUNT_HEIGHT (MASTER_SCALER * 150 )
+#define FILTER_RELEASE_COUNT_WEIGHT (MASTER_SCALER * 225 )
 
 #define UNASSIGNED_STDEV_START      -999999999
 #define POST_SERIAL_PAUSE_MSEC       0
 
 #ifdef  _WIN32
 //  #define sensorType_Test     sensorType_DistanceWidth
-#define sensorType_Test     sensorType_Weight
+#define sensorType_Test     sensorType_DistanceLength
 #else   //  _WIN32
 #define sensorType_Test    100
 #endif  //  _WIN32
@@ -730,6 +738,35 @@ bool shouldShowCsvForDebug(void)
     return pleaseShowCsvForDebug;
 }
 
+int32_t getFilterReleaseCount(sensorType_t sensor)
+{
+    int32_t     returnValue = 0;
+
+    switch (sensor)
+    {
+    case sensorType_DistanceLength: returnValue = FILTER_RELEASE_COUNT_LENGTH; break;
+    case sensorType_DistanceWidth:  returnValue = FILTER_RELEASE_COUNT_WIDTH;  break;
+    case sensorType_DistanceHeight: returnValue = FILTER_RELEASE_COUNT_HEIGHT; break;
+    case sensorType_Weight:         returnValue = FILTER_RELEASE_COUNT_WEIGHT; break;
+    default:                        returnValue = FILTER_RELEASE_COUNT_WEIGHT; break;
+    }
+    return returnValue;
+}
+
+int32_t getFilterIncreaseCount(sensorType_t sensor)
+{
+    int32_t     returnValue = 0;
+
+    switch (sensor)
+    {
+    case sensorType_DistanceLength: returnValue = FILTER_INCREASE_COUNT_LENGTH; break;
+    case sensorType_DistanceWidth:  returnValue = FILTER_INCREASE_COUNT_WIDTH;  break;
+    case sensorType_DistanceHeight: returnValue = FILTER_INCREASE_COUNT_HEIGHT; break;
+    case sensorType_Weight:         returnValue = FILTER_INCREASE_COUNT_WEIGHT; break;
+    default:                        returnValue = FILTER_INCREASE_COUNT_WEIGHT; break;
+    }
+    return returnValue;
+}
 
 
 static bool pleaseShowTareStateForDebug = false;
@@ -1894,7 +1931,7 @@ static          bool    showDensityHeader = true;
                 bool            useThisSensor = true;
 
                 applyLinearCorrection = false;
-                if (1  &&  sensorIndex == sensorType_DistanceLength)
+                if (0  &&  sensorIndex == sensorType_DistanceLength)
                 {
                     //  Don't apply this rule if the difference is within 6mm.  The IFM length sensor has poor resolution
                     int32_t     scalingAmount = getCalAdcCountsPerUnit_x1000(sensorIndex);
@@ -2246,7 +2283,7 @@ static          bool    showDensityHeader = true;
             if (amountDifference <= 2)
             {
                 //  Sensor seems more stable, filter more by reducing the percentage
-                filterScaling_Pctg[sensorIndex] -= FILTER_INCREASE_COUNT;
+                filterScaling_Pctg[sensorIndex] -= getFilterIncreaseCount(sensorIndex); getFilterIncreaseCount(sensorIndex);
                 if (filterScaling_Pctg[sensorIndex] <= 1) filterScaling_Pctg[sensorIndex] = 1;    // Limit the percentage to be above zero
 
                 stabilityCount[sensorIndex]++;
@@ -2254,7 +2291,7 @@ static          bool    showDensityHeader = true;
             }
             else if (amountDifference >= 5)
             {   //  Release the filter so it drops fast
-                filterScaling_Pctg[sensorIndex] += FILTER_RELEASE_COUNT;
+                filterScaling_Pctg[sensorIndex] += getFilterReleaseCount(sensorIndex);
                 if (filterScaling_Pctg[sensorIndex] > quantizationLimit[sensorIndex]) filterScaling_Pctg[sensorIndex] = quantizationLimit[sensorIndex]; // Limit the percentage to be quantizationLimit or below
 
 //              dbgSerial.print(F("Release\n"));
