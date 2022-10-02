@@ -103,6 +103,8 @@ void binningObj_EventHandler(eventQueue_t* event)
                  6        190 .. 210
                  7        210 .. 230
                  8        230 .. 240
+                 9        <100
+                10        >240
             */
 
             /*  This is where we determine how to move in the acceptable limits to account for
@@ -113,10 +115,10 @@ void binningObj_EventHandler(eventQueue_t* event)
                 and each dimension is multiplied in.
             */
 
-            const   float   lengthUncertainty  = 2.3f,   // mm
-                            widthUncertainty   = 1.8f,   // mm
-                            heightUncertainty  = 1.8f,   // mm
-                            weightUncertainty  = 2.5f;   // grams
+            const   float   lengthUncertainty  = 1.3f,   // mm
+                            widthUncertainty   = 1.0f,   // mm
+                            heightUncertainty  = 1.0f,   // mm
+                            weightUncertainty  = 1.0f;   // grams
 
             float           densityLimitScaling =       //  A percentage to encroach the outer limits
                                                  ((1.0f + lengthUncertainty  / (float)curentStickLength_mm   )
