@@ -6,7 +6,7 @@
 #include "events.h"
 #include "calibration.h"
 
-#define FORCED_HEIGHT_VALUE       220
+//  #define FORCED_HEIGHT_VALUE       220
 //  #define FORCED_WEIGHT_VALUE      250
 
 

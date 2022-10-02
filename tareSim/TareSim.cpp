@@ -399,7 +399,7 @@ int main(int argc, char **argv)
     forceCalPointPair(3, 0, 0, 0);
 #endif  //  ROSS_2022_07_14_RossWeightTestOnBrokenSystem
 
-#define DAVE_2022_09_26_WeightStabilitySensor1Only_4th
+//#define DAVE_2022_09_26_WeightStabilitySensor1Only_4th
 #ifdef  DAVE_2022_09_26_WeightStabilitySensor1Only_4th
 
     //  This is for "WeightStabilitySensor1Only-4th.log"
@@ -421,6 +421,30 @@ int main(int argc, char **argv)
     forceCalPointPair(3, 1, 8630, 77);
     forceCalPointPair(3, 2, 39986, 351);
 #endif  //  DAVE_2022_09_26_WeightStabilitySensor1Only_4th
+
+
+#define DAVE_2022_10_02_LengthChange_About14mm_Length0
+#ifdef  DAVE_2022_10_02_LengthChange_About14mm_Length0
+
+    //  This is for "DAVE_2022_10_02_LengthChange_About14mm_Length0.log"
+    setCurrentTarePoint(0, 5608299);     //  Set tare so we can add calibrations
+    forceCalPointPair(0, 0, 0, 0);
+    forceCalPointPair(0, 1, -592717, 48);
+    forceCalPointPair(0, 2, -3515794, 285);
+
+    setCurrentTarePoint(1, 3666459);            //  Set tare so we can add calibrations
+    forceCalPointPair(1, 0, 0, 0);
+    forceCalPointPair(1, 1, -345946, 48);       //  Width
+    forceCalPointPair(1, 2, -868033, 122);      //  Width
+
+    setCurrentTarePoint(2, 4554901);            //  Set tare so we can add calibrations
+    forceCalPointPair(2, 0, 0, 0);
+
+    setCurrentTarePoint(3, -11627);             //  Set tare so we can add calibrations
+    forceCalPointPair(3, 0, 0, 0);
+    forceCalPointPair(3, 1, 8630, 77);
+    forceCalPointPair(3, 2, 39986, 351);
+#endif  //  DAVE_2022_10_02_LengthChange_About14mm_Length0
 
 
 
@@ -479,7 +503,7 @@ int main(int argc, char **argv)
             printf("");
         }
 
-        if (eventTimestamp >= 118382)
+        if (eventTimestamp >= 141575)
         {
             printf("");
         }

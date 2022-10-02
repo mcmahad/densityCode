@@ -19,8 +19,6 @@ static  HardwareSerial      dbgSerial,
 #endif // _WIN32
 
 
-
-
 void binningObj_Initialize(void)
 {
 }
@@ -34,27 +32,61 @@ static  float   curentStickDensity_kgm3;
 
 void binningObj_EventHandler(eventQueue_t* event)
 {
-//  dbgSerial.println(F("binning:"));
+    if (0)
+    {
+        dbgSerial.print(F("binning:  EventId="));
+        dbgSerial.print(event->eventId);
+    }
 
     switch (event->eventId)
     {
     case binningEvt_SetCurrentStickLength:
+        if (0)
+        {
+            dbgSerial.print(F(":  SetLength="));
+            dbgSerial.print(event->data1);
+            dbgSerial.println(F(""));
+        }
         curentStickLength_mm = event->data1;
         break;
 
     case binningEvt_SetCurrentStickWidth:
+        if (0)
+        {
+            dbgSerial.print(F(":  SetWidth="));
+            dbgSerial.print(event->data1);
+            dbgSerial.println(F(""));
+        }
         curentStickWidth_mm = event->data1;
         break;
 
     case binningEvt_SetCurrentStickHeight:
+        if (0)
+        {
+            dbgSerial.print(F(":  SetHeight="));
+            dbgSerial.print(event->data1);
+            dbgSerial.println(F(""));
+        }
         curentStickHeight_mm = event->data1;
         break;
 
     case binningEvt_SetCurrentStickWeight:
+        if (0)
+        {
+            dbgSerial.print(F(":  SetWeight="));
+            dbgSerial.print(event->data1);
+            dbgSerial.println(F(""));
+        }
         curentStickWeight_grams = event->data1;
         break;
 
     case binningEvt_SetCurrentStickDensity:
+        if (0)
+        {
+            dbgSerial.print(F(":  Density="));
+            dbgSerial.print(event->data1);
+            dbgSerial.println(F(""));
+        }
         curentStickDensity_kgm3 = (float)event->data1;
         break;
 
@@ -93,9 +125,10 @@ void binningObj_EventHandler(eventQueue_t* event)
                                                 * (1.0f + weightUncertainty  / (float)curentStickWeight_grams) - 1.0f);
 
 #ifndef _WIN32
-            dbgSerial.println(F("ShowBall event"));
+            dbgSerial.print(F(":  ShowBall="));
+            dbgSerial.print(event->data1);
+            dbgSerial.println(F(""));
 #endif _WIN32
-
 
             //  First, apply the encroached outer limits we found above.  If inside those limits, then apply the old rules
             densityLimitScaling = (float)fabs(densityLimitScaling);
@@ -119,13 +152,16 @@ void binningObj_EventHandler(eventQueue_t* event)
             else if (                          event->data1 >= 2400) ballIndex = 10;
 
 #ifndef _WIN32
-            dbgSerial.print(F("ballIndex="));
-            dbgSerial.println(ballIndex);
+            if (0)
+            {
+                dbgSerial.print(F("ballIndex="));
+                dbgSerial.println(ballIndex);
+            }
 
             if (ballIndex >= 1  &&  ballIndex <= 10)
             {
                 //  7 is the magic index where ball pictures start in the Nextion
-                nextionSerial.print(F("="));
+                nextionSerial.print(F("ball.pic="));
                 nextionSerial.print(ballIndex + 7);
                 nextionSerial.print(F("\xFF\xFF\xFF"));
             }
@@ -170,16 +206,19 @@ void binningObj_EventHandler(eventQueue_t* event)
         break;
 
     case binningEvt_ClearDensityBall:
-//      dbgSerial.println(F("clearBall event"));
-        nextionSerial.print(F("=7"));
+        if (0)
+        {
+            dbgSerial.println(F(":  ClearDensityBall"));
+        }
+        nextionSerial.print(F("ball.pic=7"));
         nextionSerial.print(F("\xFF\xFF\xFF"));
 
 //      dbgSerial.println(F("Empty ballIndex #2"));
         break;
 
     default:
-        dbgSerial.print(F("unknown event "));
-        nextionSerial.println(event->eventId);
+        dbgSerial.print(F(":  UnknownEvent="));
+        dbgSerial.println(event->eventId);
         break;
     }
 }

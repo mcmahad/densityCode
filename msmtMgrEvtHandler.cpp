@@ -55,7 +55,7 @@ int getLineCnt(void);
 
 #ifdef  _WIN32
 //  #define sensorType_Test     sensorType_DistanceWidth
-#define sensorType_Test     sensorType_DistanceLength
+#define sensorType_Test     sensorType_Weight
 #else   //  _WIN32
 #define sensorType_Test    100
 #endif  //  _WIN32
