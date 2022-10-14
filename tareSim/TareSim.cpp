@@ -5,6 +5,7 @@
 #define             _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -46,19 +47,53 @@ int main(int argc, char **argv)
 
     inputFilePtr = stdin;
 
-    if (argc > 1)
+    switch (argc)
     {
-        inputFilePtr = fopen(argv[1], "r");
-        if (inputFilePtr == NULL)
+    case 3:
+        if (_strnicmp("meas", argv[1], 4) == 0)
         {
-            fprintf(stderr, "ERROR - Couldn't open source file %s\n", argv[1]);
+            showMeasCsv_NotRaw();
+
+            //  Try to open it as a file
+            inputFilePtr = fopen(argv[2], "r");
+            if (inputFilePtr == NULL)
+            {
+                fprintf(stderr, "ERROR - Couldn't open source file %s\n", argv[2]);
+                exit(1);
+            }
+        }
+        else
+        {
+            fprintf(stderr, "ERROR - Unknown option %s\n", argv[1]);
             exit(1);
         }
-    }
-    else
-    {
+        break;
+
+    case 2:
+        //  First check if it's meas from stdin
+        if (strcmp("meas", argv[1]) == 0)
+        {
+            inputFilePtr = stdin;
+            showMeasCsv_NotRaw();
+        }
+        else
+        {
+            //  Try to open it as a file
+            inputFilePtr = fopen(argv[1], "r");
+            if (inputFilePtr == NULL)
+            {
+                fprintf(stderr, "ERROR - Couldn't open source file %s\n", argv[1]);
+                exit(1);
+            }
+        }
+        break;
+
+    default:
+    case 1:     //  We take input from stdin
         inputFilePtr = stdin;
+        break;
     }
+
 
     initializeEvents();
 
@@ -423,7 +458,30 @@ int main(int argc, char **argv)
 #endif  //  DAVE_2022_09_26_WeightStabilitySensor1Only_4th
 
 
-#define DAVE_2022_10_02_LengthChange_About14mm_Length0
+// #define DAVE_2022_10_02_LengthChange_About14mm_Length0
+#ifdef  DAVE_2022_10_02_LengthChange_About14mm_Length0
+
+    //  This is for "DAVE_2022_10_02_LengthChange_About14mm_Length0.log"
+    setCurrentTarePoint(0, 5608299);     //  Set tare so we can add calibrations
+    forceCalPointPair(0, 0, 0, 0);
+    forceCalPointPair(0, 1, -592717, 48);
+    forceCalPointPair(0, 2, -3515794, 285);
+
+    setCurrentTarePoint(1, 3666459);            //  Set tare so we can add calibrations
+    forceCalPointPair(1, 0, 0, 0);
+    forceCalPointPair(1, 1, -345946, 48);       //  Width
+    forceCalPointPair(1, 2, -868033, 122);      //  Width
+
+    setCurrentTarePoint(2, 4554901);            //  Set tare so we can add calibrations
+    forceCalPointPair(2, 0, 0, 0);
+
+    setCurrentTarePoint(3, -11627);             //  Set tare so we can add calibrations
+    forceCalPointPair(3, 0, 0, 0);
+    forceCalPointPair(3, 1, 8630, 77);
+    forceCalPointPair(3, 2, 39986, 351);
+#endif  //  DAVE_2022_10_02_LengthChange_About14mm_Length0
+
+//#define  // #define DAVE_2022_10_02_LengthChange_About14mm_Length0
 #ifdef  DAVE_2022_10_02_LengthChange_About14mm_Length0
 
     //  This is for "DAVE_2022_10_02_LengthChange_About14mm_Length0.log"
@@ -447,7 +505,55 @@ int main(int argc, char **argv)
 #endif  //  DAVE_2022_10_02_LengthChange_About14mm_Length0
 
 
+#define ROSS_2022_10_05_81grms
+#ifdef  ROSS_2022_10_05_81grms
 
+    //  This is for "81grms.log"
+    setCurrentTarePoint(0, 5051252);     //  Set tare so we can add calibrations
+    forceCalPointPair(0, 0, 0, 0);
+    forceCalPointPair(0, 1, -192377, 86);
+    forceCalPointPair(0, 2, -435770, 198);
+    forceCalPointPair(0, 3, -612821, 278);
+    forceCalPointPair(0, 4, -691962, 311);
+    forceCalPointPair(0, 5, -771942, 347);
+    forceCalPointPair(0, 6, -946564, 425);
+    forceCalPointPair(0, 7, -1209731, 538);
+    forceCalPointPair(0, 8, -1415604, 629);
+
+    setCurrentTarePoint(1, 3946524);            //  Set tare so we can add calibrations
+    forceCalPointPair(1, 0, 0, 0);
+    forceCalPointPair(1, 1, 543602, 30);
+    forceCalPointPair(1, 2, 707116, 38);
+    forceCalPointPair(1, 3, 730990, 40);
+    forceCalPointPair(1, 4, 935281, 50);
+    forceCalPointPair(1, 5, 1180994, 63);
+    forceCalPointPair(1, 6, 1297519, 70);
+    forceCalPointPair(1, 7, 1337600, 73);
+    forceCalPointPair(1, 8, 1786093, 100);
+
+    setCurrentTarePoint(2, 4721057);            //  Set tare so we can add calibrations
+    forceCalPointPair(2, 0, 0, 0);
+    forceCalPointPair(2, 1, 658580, 30);
+    forceCalPointPair(2, 2, 805011, 38);
+    forceCalPointPair(2, 3, 839150, 40);
+    forceCalPointPair(2, 4, 1105888, 50);
+    forceCalPointPair(2, 5, 1313050, 63);
+    forceCalPointPair(2, 6, 1456398, 70);
+    forceCalPointPair(2, 7, 1516469, 73);
+    forceCalPointPair(2, 8, 2100871, 100);
+
+    setCurrentTarePoint(3, 74476);             //  Set tare so we can add calibrations
+    forceCalPointPair(3, 0, 0, 0);
+    forceCalPointPair(3, 1, 5001, 50);
+    forceCalPointPair(3, 2, 10057, 100);
+    forceCalPointPair(3, 3, 15095, 150);
+    forceCalPointPair(3, 4, 20073, 200);
+    forceCalPointPair(3, 5, 25089, 250);
+    forceCalPointPair(3, 6, 30147, 300);
+    forceCalPointPair(3, 7, 35172, 350);
+    forceCalPointPair(3, 8, 50259, 500);
+
+#endif  //  DAVE_2022_10_02_LengthChange_About14mm_Length0
 
     sendEvent(msmtMgrEvt_EnableFinalReports, 0, 0);
 
@@ -503,7 +609,7 @@ int main(int argc, char **argv)
             printf("");
         }
 
-        if (eventTimestamp >= 141575)
+        if (eventTimestamp >= 311903)
         {
             printf("");
         }

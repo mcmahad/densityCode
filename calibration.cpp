@@ -680,7 +680,7 @@ int16_t findYFromCalibration(sensorType_t sensor, int32_t incomingX)
     pCalPointArray_t    calArray = &calPointArray[sensor];
     int16_t             index    = -99;     //  Bogus value, so we know if has been assigned
     bool                xValuesIncrementInCal;
-    int32_t             thisTareOffset = tareOffset[sensor];
+    int32_t             thisTareOffset = getCalTarePoint(sensor);
     int                 limit = calArray->calPointCnt;
 
 #if  defined(SHOW_CAL_DEBUG) &&  defined(NEVER_DO_THIS)

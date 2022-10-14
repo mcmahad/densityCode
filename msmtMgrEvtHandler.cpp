@@ -55,7 +55,7 @@ int getLineCnt(void);
 
 #ifdef  _WIN32
 //  #define sensorType_Test     sensorType_DistanceWidth
-#define sensorType_Test     sensorType_Weight
+#define sensorType_Test     sensorType_DistanceHeight
 #else   //  _WIN32
 #define sensorType_Test    100
 #endif  //  _WIN32
@@ -248,6 +248,12 @@ static  int16_t   lastW,
 
 static  bool      finalMeasReportsEnabled = false;
 static  char      oldDensityString[30];
+
+#ifdef _WIN32
+static  bool      showMeasNotRawCsv = false;    //  Used only for Win32 printing control
+#endif // _WIN32
+
+
 
 void enableCalibrationCalcPrinting(void);
 void disableCalibrationCalcPrinting(void);
@@ -768,6 +774,14 @@ int32_t getFilterIncreaseCount(sensorType_t sensor)
 }
 
 
+#ifdef _WIN32
+void showMeasCsv_NotRaw(void)
+{
+    showMeasNotRawCsv = true;
+}
+#endif  //  _WIN32
+
+
 static bool pleaseShowTareStateForDebug = false;
 
 static int32_t getMaxDivisorScalingLimit(sensorType_t sensor)
@@ -953,11 +967,6 @@ void msmtMgrObj_EventHandler(eventQueue_t* event)
 //  dbgSerial.print(F("Event ID=0x"));
 //  dbgSerial.println(event->eventId, HEX  );
     static      int16_t     lastNewX;
-
-    if (lastDisplayedValue[1] > 320)
-    {
-        printf("");
-    }
 
     switch (event->eventId)
     {
@@ -1346,7 +1355,6 @@ static      int8_t      colorIndex   = 0;
 
             if (denominator >= 2.0)
             {
-
                 totalDensity_kgPerMeter3 = (float)((float)lastDisplayedValue[sensorType_Weight] * 1000000.0) / denominator;
 
                 float   densityFromRaw = densityFromRawmsmts_kgm3();
@@ -1618,7 +1626,7 @@ static      int8_t      colorIndex   = 0;
 
 #ifdef  _WIN32
             //  This reports data for a density calculation
-            if (0)
+            if (showMeasNotRawCsv)
             {
                 int     csvLineNumber = getLineCnt();
 static          bool    showDensityHeader = true;
@@ -1751,16 +1759,6 @@ static          bool    showDensityHeader = true;
                 showTareMark[1] = 0;
                 showTareMark[2] = 0;
                 showTareMark[3] = 0;
-
-                if (csvLineNumber == 512)
-                {
-                    printf("");
-                }
-
-                if (lastDisplayedValue[1] == 77)
-                {
-                    printf("");
-                }
             }
 #endif // !_WIN32
         }
@@ -2343,7 +2341,7 @@ static          bool    showDensityHeader = true;
 //              dbgSerial.print(F("Release\n"));
                 //  Make stability disappear quickly
                 stabilityCount[sensorIndex] -= 7;
-                if (stabilityCount[sensorIndex] < 1) stabilityCount[sensorIndex] = 1;
+                stabilityCount[sensorIndex]  = max(1, stabilityCount[sensorIndex]);
             }
 
             if (filteredAmount <= 10  &&  filteredAmount != -32768  &&  stabilityCount[sensorIndex] >= 30)
@@ -2764,10 +2762,8 @@ static          bool    showDensityHeader = true;
                     }
 
                     {
-//                      dbgSerial.print(F(",| "));r
-//                      if (newValue == lastDisplayedValue[sensorIndex] && newValue != -32768)
                         //  Check for newValue is greater than a small negative value, as some lasers go negative and stay there
-                        if (newValue == lastDisplayedValue[sensorIndex] && newValue >=    -10)
+                        if (newValue == lastDisplayedValue[sensorIndex] && newValue >= -10)
                         {
 //                          dbgSerial.print(newValueIsIdenticalCnt[sensorIndex] + 100);
 //                          dbgSerial.print(F(", "));
@@ -2959,8 +2955,8 @@ static          bool    showDensityHeader = true;
             }
 
 #ifdef _WIN32
-            //  This reports data for a single sensor measurement
-            if (1  &&  sensorType_Test >= sensorType_First  &&  sensorType_Test < sensorType_MaxSensors  &&  sensorType_Test == sensorIndex)
+            //  This reports data for each single raw sensor measurement
+            if (!showMeasNotRawCsv &&  sensorType_Test >= sensorType_First  &&  sensorType_Test < sensorType_MaxSensors  &&  sensorType_Test == sensorIndex)
             {
                 int     csvLineNumber = getLineCnt();
 static          bool    showSensorHeader    = true;
@@ -2970,15 +2966,15 @@ static          bool    showSensorHeader    = true;
                     showSensorHeader = false;
                     printf("\n:CSV"
                         ",timestamp"
-                        ",LineNum"
+                        ",LineNum"                  //   1
                         ",Raw"
-                        ",Filt"
+                        ",Filt"                     //   3
                         ",tareState"
-                        ",tareOccured"
+                        ",tareOccured"              //   5
                         ",Stable"
-                        ",LastDisplayedTareState"
+                        ",LastDisplayedTareState"   //   7
                         ",SteadyValCnt"
-//                      ",Numerator"
+                        //                      ",Numerator"
                         ",Denominator"              //   9
                         ",isIdentical"
                         ",scalingPctg"              //  11
@@ -2997,10 +2993,11 @@ static          bool    showSensorHeader    = true;
                         ",reportedfiltered"
                         ",lowNoiseGainMultiplier"   //  25
                         ",sameDirectionGainMultiplier"
+                        ",tarePoint"                //  27
                         "\n"
                     );
-                }   //            0  1     3     5     7       9 10 11    13    15      17    19    21    23    25
-                printf("\n:CSV,%06d,%d,%d,%d,%d,%d,%d,%d,%d,%lld,%d,%d,%d,%d,%d,%d,%d,%lld,%f,%d,%d,%d,%d,%d,%d,%d,%d\n",
+                }   //            0  1     3     5     7       9 10 11    13    15      17    19    21    23    25    27
+                printf("\n:CSV,%06d,%d,%d,%d,%d,%d,%d,%d,%d,%lld,%d,%d,%d,%d,%d,%d,%d,%lld,%f,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
                     millis(),                                     //    0
                     csvLineNumber++,                              //    1
                     currentRawSensorReading[sensorType_Test],     //    2
@@ -3028,7 +3025,8 @@ static          bool    showSensorHeader    = true;
                     lastReportedRawValue,                         //   23
                     lastReportedFilteredValue,                    //   24
                     lowNoiseGainMultiplier ,                      //   25
-                    sameDirectionGainMultiplier                   //   26
+                    sameDirectionGainMultiplier,                  //   26
+                    getCalTarePoint(sensorType_Test)              //   27
                 );
                 showTareMark[sensorType_Test] = 0;
             }

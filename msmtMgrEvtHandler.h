@@ -23,3 +23,5 @@ bool shouldShowTareStateForDebug(void);
 
 //  Pass the arduino raw and filtered measurements to the output for cross checking
 void setReportedRawAndFilteredValues(int32_t reportedRawValue, uint32_t reportedFilteredValue);
+
+void showMeasCsv_NotRaw(void);
