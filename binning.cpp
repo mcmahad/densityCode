@@ -6,8 +6,12 @@
 #include "win32shims.h"
 #endif // _WIN32
 
+#include <string.h>
+
 #include "events.h"
 #include "binning.h"
+#include "accumulationMgr.h"
+
 
 #ifndef _WIN32
 extern HardwareSerial &dbgSerial;
@@ -201,9 +205,43 @@ void binningObj_EventHandler(eventQueue_t* event)
             densityLimitScaling,
             ballIndex
                 );
-
 #endif // WIN32
 
+            {
+                stickState_t        newStickState;
+
+                memset(&newStickState, 0, sizeof(newStickState));
+
+                if (ballIndex == 9)
+                {   //  This is the light ball
+                    newStickState.boardFeetSum_light   = curentStickLength_mm * curentStickWidth_mm * curentStickHeight_mm;
+                    newStickState.stickCount_light     = 1;
+                    newStickState.stickLengthSum_light = curentStickLength_mm;
+                    newStickState.weightSum_light      = curentStickWeight_grams;
+                }
+                else if (ballIndex == 10)
+                {   //  This is the heavy ball
+                    newStickState.boardFeetSum_heavy   = curentStickLength_mm * curentStickWidth_mm * curentStickHeight_mm;
+                    newStickState.stickCount_heavy     = 1;
+                    newStickState.stickLengthSum_heavy = curentStickLength_mm;
+                    newStickState.weightSum_heavy      = curentStickWeight_grams;
+                }
+                else
+                {   //  This is a good ball
+                    newStickState.boardFeetSum_good    = curentStickLength_mm * curentStickWidth_mm * curentStickHeight_mm;
+                    newStickState.stickCount_good      = 1;
+                    newStickState.stickLengthSum_good  = curentStickLength_mm;
+                    newStickState.weightSum_good       = curentStickWeight_grams;
+                }
+
+                //  Log the detailed stats
+                newStickState.stickCount_binned    [ballIndex - 1] = 1;
+                newStickState.stickLengthSum_binned[ballIndex - 1] = curentStickLength_mm;
+                newStickState.boardFeetSum_binned  [ballIndex - 1] = curentStickLength_mm * curentStickWidth_mm * curentStickHeight_mm;
+                newStickState.weightSum_binned     [ballIndex - 1] = curentStickWeight_grams;
+
+                accumulationObj_ReportNewStickStats(&newStickState);
+            }
         }
         break;
 
@@ -224,4 +262,3 @@ void binningObj_EventHandler(eventQueue_t* event)
         break;
     }
 }
-

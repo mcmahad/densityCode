@@ -11,6 +11,8 @@
 #else
 #include "win32shims.h"
 extern EEPROM_t EEPROM;
+extern  int32_t eventTimestamp;
+
 #endif // _WIN32
 
 
@@ -46,7 +48,7 @@ static  HardwareSerial      dbgSerial,
 #define SHOW_CAL_DEBUG
 #endif  //  SHOW_ALL_CAL_DEBUG
 
-#define    sensorType_Test      (sensorType_Weight)
+#define    sensorType_Test      (sensorType_DistanceLength)
 
 /*  Storing or updating a new calibration point requires storing the current tare value for
     that sensor.  Three values allows correction for wandering tare points without having
@@ -95,8 +97,13 @@ static  bool                 calSlopeSignIsPositive[sensorType_MaxSensors];
     ADC counts.
 */
 static  int32_t currentMXplusB_tareOffset[sensorType_MaxSensors];
-static  float   currentMXplusB_Slope     [sensorType_MaxSensors],
-                currentMXplusB_Intercept [sensorType_MaxSensors];
+static  float   currentMXplusB_Slope[sensorType_MaxSensors],
+                currentMXplusB_Intercept[sensorType_MaxSensors];
+
+float   debugWeight,        //  Global, so they can be printed
+        debugHeight,
+        debugLength,
+        debugWidth;
 
 static void moveCalPointsUp(sensorType_t sensor, int16_t itemIndex);
 static void moveCalPointsDown(sensorType_t sensor, int16_t itemIndex);
@@ -1368,6 +1375,7 @@ void readCalDataFromFlash(bool setStickcount)
     bytesRemaining -= 4;
 }
 
+float   theRealDenominator;
 
 /*  Compute density from raw ADC counts before applying any scaling or rounding,
     then round as the very last step.  This avoids trunction and rounding errors
@@ -1385,8 +1393,15 @@ float densityFromRawmsmts_kgm3(void)
 
     for (int sensorId = 0; sensorId < sensorType_MaxSensors; sensorId++)
     {
+        int32_t     lastSensorReading =  getLastFilteredSensorReading(sensorId);
+        int16_t     unusedReturnValue;
+
+        //  Force update of MXplusB values to make sure we have the lastest
+        //  This is probably useless and wastes time.
+        unusedReturnValue = findYFromCalibration(sensorId, lastSensorReading);
+
         //  First off, get raw values and remove the tare offset, convert to float
-        myValues_ADC[sensorId] = (float)(getLastFilteredSensorReading(sensorId) - currentMXplusB_tareOffset[sensorId]);
+        myValues_ADC[sensorId] = (float)(lastSensorReading - currentMXplusB_tareOffset[sensorId]);
 
         //  Remove the scaled intercept portion.  We need values that are referenced to the
         //  origin (ie - intercept is zero) and only need a scaling factor applied to make mm/grams.
@@ -1407,13 +1422,25 @@ float densityFromRawmsmts_kgm3(void)
     //  Construct the density from the four measurements. At this point,
     //  All the offsets have been removed from the measurements
 
-    float   denominator = myValues_ADC[sensorType_DistanceLength] * myValues_ADC[sensorType_DistanceWidth] * myValues_ADC[sensorType_DistanceHeight];
+    theRealDenominator = myValues_ADC[sensorType_DistanceLength] * myValues_ADC[sensorType_DistanceWidth] * myValues_ADC[sensorType_DistanceHeight];
 
     //  Compute the density in unscaled ADC counts
-    returnValue = myValues_ADC[sensorType_Weight] / denominator;
+    returnValue = myValues_ADC[sensorType_Weight] / theRealDenominator;
 
-    //  Apply all the scaling factors to convert to grams/mm3
-    returnValue *= currentMXplusB_Slope[sensorType_Weight] / (currentMXplusB_Slope[sensorType_DistanceLength] * currentMXplusB_Slope[sensorType_DistanceWidth ] * currentMXplusB_Slope[sensorType_DistanceHeight]);
+#if    defined(_WIN32)
+    debugWeight = myValues_ADC[sensorType_Weight        ] * currentMXplusB_Slope[sensorType_Weight        ];
+    debugHeight = myValues_ADC[sensorType_DistanceHeight] * currentMXplusB_Slope[sensorType_DistanceHeight];
+    debugLength = myValues_ADC[sensorType_DistanceLength] * currentMXplusB_Slope[sensorType_DistanceLength];
+    debugWidth  = myValues_ADC[sensorType_DistanceWidth ] * currentMXplusB_Slope[sensorType_DistanceWidth ];
+    printf("'%12d", eventTimestamp);
+    printf("   weight=%0.5fg",  (float)debugWeight);
+    printf("   height=%0.5fmm", (float)debugHeight);
+    printf("   length=%0.5fmm", (float)debugLength);
+    printf("   width =%0.5fmm", (float)debugWidth );
+    printf("   denominator=%12.5f", theRealDenominator);
+    printf("\n");
+    printf("");
+#endif //   defined(_WIN32) //  Apply all the scaling factors to convert to grams/mm3 returnValue *= currentMXplusB_Slope[sensorType_Weight] / (currentMXplusB_Slope[sensorType_DistanceLength] * currentMXplusB_Slope[sensorType_DistanceWidth ] * currentMXplusB_Slope[sensorType_DistanceHeight]);
 
 #ifdef  FORCED_HEIGHT_VALUE
     returnValue /= FORCED_HEIGHT_VALUE;
@@ -1423,8 +1450,15 @@ float densityFromRawmsmts_kgm3(void)
     returnValue /= FORCED_WEIGHT_VALUE;
 #endif  //  FORCED_WEIGHT_VALUE
 
+    //  Turn it back into density in standard units
+    returnValue *=   currentMXplusB_Slope[sensorType_Weight]
+                   / currentMXplusB_Slope[sensorType_DistanceLength]
+                   / currentMXplusB_Slope[sensorType_DistanceHeight]
+                   / currentMXplusB_Slope[sensorType_DistanceWidth ];
+
     //  Convert grams/mm3 into kg/m3
     returnValue *= 1000000.0;
+
 
     return returnValue;
 }

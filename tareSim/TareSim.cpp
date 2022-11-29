@@ -505,7 +505,7 @@ int main(int argc, char **argv)
 #endif  //  DAVE_2022_10_02_LengthChange_About14mm_Length0
 
 
-#define ROSS_2022_10_05_81grms
+//#define ROSS_2022_10_05_81grms
 #ifdef  ROSS_2022_10_05_81grms
 
     //  This is for "81grms.log"
@@ -554,6 +554,56 @@ int main(int argc, char **argv)
     forceCalPointPair(3, 8, 50259, 500);
 
 #endif  //  DAVE_2022_10_02_LengthChange_About14mm_Length0
+
+#define IDEAL_DATA
+#ifdef  IDEAL_DATA
+
+    //  This is for "IdealData.log"
+    setCurrentTarePoint(0, 0);     //  Set tare so we can add calibrations
+    forceCalPointPair(0, 0, 0, 0);
+    forceCalPointPair(0, 1, 100000, 100);
+    forceCalPointPair(0, 2, 110000, 110);
+    forceCalPointPair(0, 3, 120000, 120);
+    forceCalPointPair(0, 4, 130000, 130);
+    forceCalPointPair(0, 5, 140000, 140);
+    forceCalPointPair(0, 6, 150000, 150);
+    forceCalPointPair(0, 7, 160000, 160);
+    forceCalPointPair(0, 8, 170000, 170);
+
+    setCurrentTarePoint(1, 8000);     //  Set tare so we can add calibrations
+    forceCalPointPair(1, 0, 0, 0);
+    forceCalPointPair(1, 1, 108000, 100);
+    forceCalPointPair(1, 2, 118000, 110);
+    forceCalPointPair(1, 3, 128000, 120);
+    forceCalPointPair(1, 4, 138000, 130);
+    forceCalPointPair(1, 5, 148000, 140);
+    forceCalPointPair(1, 6, 158000, 150);
+    forceCalPointPair(1, 7, 168000, 160);
+    forceCalPointPair(1, 8, 178000, 170);
+
+    setCurrentTarePoint(2, 4721057);            //  Set tare so we can add calibrations
+    forceCalPointPair(2, 0, 0, 0);
+    forceCalPointPair(2, 1, 658580, 30);
+    forceCalPointPair(2, 2, 805011, 38);
+    forceCalPointPair(2, 3, 839150, 40);
+    forceCalPointPair(2, 4, 1105888, 50);
+    forceCalPointPair(2, 5, 1313050, 63);
+    forceCalPointPair(2, 6, 1456398, 70);
+    forceCalPointPair(2, 7, 1516469, 73);
+    forceCalPointPair(2, 8, 2100871, 100);
+
+    setCurrentTarePoint(3, 74476);             //  Set tare so we can add calibrations
+    forceCalPointPair(3, 0, 0, 0);
+    forceCalPointPair(3, 1, 5001, 50);
+    forceCalPointPair(3, 2, 10057, 100);
+    forceCalPointPair(3, 3, 15095, 150);
+    forceCalPointPair(3, 4, 20073, 200);
+    forceCalPointPair(3, 5, 25089, 250);
+    forceCalPointPair(3, 6, 30147, 300);
+    forceCalPointPair(3, 7, 35172, 350);
+    forceCalPointPair(3, 8, 50259, 500);
+
+#endif  //  IDEAL_DATA
 
     sendEvent(msmtMgrEvt_EnableFinalReports, 0, 0);
 
@@ -609,7 +659,12 @@ int main(int argc, char **argv)
             printf("");
         }
 
-        if (eventTimestamp >= 311903)
+        if (eventTimestamp >= 311243)
+        {
+            printf("");
+        }
+
+        if (eventTimestamp >= 310693)
         {
             printf("");
         }

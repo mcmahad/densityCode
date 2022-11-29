@@ -14,6 +14,7 @@ typedef enum
     evtObj_AdcCvt           ,
     evtObj_TallyTracker     ,
     evtObj_Binning          ,
+    evtObj_Accumulation     ,
 } eventObject_t;
 
 
@@ -120,6 +121,10 @@ typedef enum
     binningEvt_SetCurrentStickHeight,
     binningEvt_SetCurrentStickWeight,
     binningEvt_SetCurrentStickDensity,
+
+    accumulationEvt_baseId = OBJ2EVT_BASE(evtObj_Accumulation),
+    accumulationEvt_LogNewStickInfo,
+    accumulationEvt_ResetStickCounts,
 } event_t;
 
 

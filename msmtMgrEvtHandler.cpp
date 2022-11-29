@@ -30,7 +30,7 @@ extern  HardwareSerial      &dbgSerial,
 #endif  //  _WIN32
 
 
-int32_t getLastFilteredSensorReading(sensorType_t sensor);
+//  int32_t getLastFilteredSensorReading(sensorType_t sensor);
 void printCalArray(sensorType_t sensor);
 void enableCalibrationCalcPrinting(void);
 void disableCalibrationCalcPrinting(void);
@@ -39,23 +39,23 @@ int getLineCnt(void);
 
 #define MASTER_SCALER       3
 #define MAX_DIVISOR_SCALING_LIMIT   (MASTER_SCALER * 900 )
-#define FILTER_INCREASE_COUNT       (MASTER_SCALER *  20 )
-#define FILTER_INCREASE_COUNT_LENGTH (MASTER_SCALER *  10 )
-#define FILTER_INCREASE_COUNT_WIDTH  (MASTER_SCALER *  10 )
-#define FILTER_INCREASE_COUNT_HEIGHT (MASTER_SCALER *  10 )
-#define FILTER_INCREASE_COUNT_WEIGHT (MASTER_SCALER *  20 )
+//#define FILTER_INCREASE_COUNT       (MASTER_SCALER *  20 )
+#define FILTER_INCREASE_PCTG_LENGTH (75 )
+#define FILTER_INCREASE_PCTG_WIDTH  (75 )
+#define FILTER_INCREASE_PCTG_HEIGHT (75 )
+#define FILTER_INCREASE_PCTG_WEIGHT (75 )
 
-#define FILTER_RELEASE_COUNT_LENGTH (MASTER_SCALER * 150 )
-#define FILTER_RELEASE_COUNT_WIDTH  (MASTER_SCALER * 150 )
-#define FILTER_RELEASE_COUNT_HEIGHT (MASTER_SCALER * 150 )
-#define FILTER_RELEASE_COUNT_WEIGHT (MASTER_SCALER * 225 )
+#define FILTER_RELEASE_PCTG_LENGTH (68 )
+#define FILTER_RELEASE_PCTG_WIDTH  (68 )
+#define FILTER_RELEASE_PCTG_HEIGHT (68 )
+#define FILTER_RELEASE_PCTG_WEIGHT (68 )
 
 #define UNASSIGNED_STDEV_START      -999999999
 #define POST_SERIAL_PAUSE_MSEC       0
 
 #ifdef  _WIN32
 //  #define sensorType_Test     sensorType_DistanceWidth
-#define sensorType_Test     sensorType_DistanceHeight
+#define sensorType_Test     sensorType_DistanceLength
 #else   //  _WIN32
 #define sensorType_Test    100
 #endif  //  _WIN32
@@ -105,6 +105,11 @@ typedef enum
 } measuringState_t;
 
 
+
+extern float    debugWeight,        //  Global, so they can be printed
+                debugHeight,
+                debugLength,
+                debugWidth;
 
 
 
@@ -743,32 +748,32 @@ bool shouldShowCsvForDebug(void)
     return pleaseShowCsvForDebug;
 }
 
-int32_t getFilterReleaseCount(sensorType_t sensor)
+int32_t getFilterReleasePctg(sensorType_t sensor)
 {
     int32_t     returnValue = 0;
 
     switch (sensor)
     {
-    case sensorType_DistanceLength: returnValue = FILTER_RELEASE_COUNT_LENGTH; break;
-    case sensorType_DistanceWidth:  returnValue = FILTER_RELEASE_COUNT_WIDTH;  break;
-    case sensorType_DistanceHeight: returnValue = FILTER_RELEASE_COUNT_HEIGHT; break;
-    case sensorType_Weight:         returnValue = FILTER_RELEASE_COUNT_WEIGHT; break;
-    default:                        returnValue = FILTER_RELEASE_COUNT_WEIGHT; break;
+    case sensorType_DistanceLength: returnValue = FILTER_RELEASE_PCTG_LENGTH; break;
+    case sensorType_DistanceWidth:  returnValue = FILTER_RELEASE_PCTG_WIDTH;  break;
+    case sensorType_DistanceHeight: returnValue = FILTER_RELEASE_PCTG_HEIGHT; break;
+    case sensorType_Weight:         returnValue = FILTER_RELEASE_PCTG_WEIGHT; break;
+    default:                        returnValue = FILTER_RELEASE_PCTG_WEIGHT; break;
     }
     return returnValue;
 }
 
-int32_t getFilterIncreaseCount(sensorType_t sensor)
+int32_t getFilterIncreasePctg(sensorType_t sensor)
 {
     int32_t     returnValue = 0;
 
     switch (sensor)
     {
-    case sensorType_DistanceLength: returnValue = FILTER_INCREASE_COUNT_LENGTH; break;
-    case sensorType_DistanceWidth:  returnValue = FILTER_INCREASE_COUNT_WIDTH;  break;
-    case sensorType_DistanceHeight: returnValue = FILTER_INCREASE_COUNT_HEIGHT; break;
-    case sensorType_Weight:         returnValue = FILTER_INCREASE_COUNT_WEIGHT; break;
-    default:                        returnValue = FILTER_INCREASE_COUNT_WEIGHT; break;
+    case sensorType_DistanceLength: returnValue = FILTER_INCREASE_PCTG_LENGTH; break;
+    case sensorType_DistanceWidth:  returnValue = FILTER_INCREASE_PCTG_WIDTH;  break;
+    case sensorType_DistanceHeight: returnValue = FILTER_INCREASE_PCTG_HEIGHT; break;
+    case sensorType_Weight:         returnValue = FILTER_INCREASE_PCTG_WEIGHT; break;
+    default:                        returnValue = FILTER_INCREASE_PCTG_WEIGHT; break;
     }
     return returnValue;
 }
@@ -1360,7 +1365,7 @@ static      int8_t      colorIndex   = 0;
                 float   densityFromRaw = densityFromRawmsmts_kgm3();
 
 #ifdef  _WIN32
-                printf("Dbg : OriginalDensity=%f  NewDensity=%f\n", totalDensity_kgPerMeter3, densityFromRaw);
+                printf("Dbg : OriginalDensity=%lf  NewDensity=%lf\n", (double)totalDensity_kgPerMeter3, (double)densityFromRaw);
 
                 if (totalDensity_kgPerMeter3 >= 205.0 &&  totalDensity_kgPerMeter3 <= 209.0)
                 {
@@ -1540,6 +1545,10 @@ static      int8_t      colorIndex   = 0;
                     densityString = String(F(" None "));        //  None1
                     snapshotOldDensity = 0.0;
                     snapshotNewDensity = 0.0;
+                    debugHeight        = 0.0;
+                    debugWidth         = 0.0;
+                    debugLength        = 0.0;
+                    debugWeight        = 0.0;
                 }
                 else if (!allSteady)
                 {
@@ -1695,10 +1704,14 @@ static          bool    showDensityHeader = true;
                         ",filtDenomintor3"
                         ",oldDensity"
                         ",newDensity"
+                        ",debugLength"
+                        ",debugWidth"
+                        ",debugHeight"
+                        ",debugWeight"
                         "\n"
                     );
-                }   //               1     3     5     7     9    11    13    15    17    19    21    23    25    27    29    31    33    35    37    39    41    43    45    47    49    51    53
-                printf("\n:CSV,%06d,%d,%d,%f,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%d,%d,%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f\n",
+                }   //               1     3     5     7     9    11    13    15    17    19    21    23    25    27    29    31    33    35    37    39    41    43    45    47    49    51    53          55          57
+                printf("\n:CSV,%06d,%d,%d,%f,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%d,%d,%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%0.5f,%0.5f,%0.5f,%0.5f\n",
                         millis(),                   //     0
                         csvLineNumber++,            //     1
                         lastStable,                 //     2
@@ -1743,17 +1756,20 @@ static          bool    showDensityHeader = true;
                         findYFromCalibration(sensorType_DistanceWidth,  filteredSensorReading[sensorType_DistanceWidth]),    //  41
                         findYFromCalibration(sensorType_DistanceHeight, filteredSensorReading[sensorType_DistanceHeight]),   //  42
                         findYFromCalibration(sensorType_Weight,         filteredSensorReading[sensorType_Weight]),           //  43
-                        (int32_t)lastNumeratorFiltSensor[0],  //  44
-                        (int32_t)lastNumeratorFiltSensor[1],  //  45
-                        (int32_t)lastNumeratorFiltSensor[2],  //  46
-                        (int32_t)lastNumeratorFiltSensor[3],  //  47
-                        (int32_t)lastDenomnatrFiltSensor[0],  //  48
-                        (int32_t)lastDenomnatrFiltSensor[1],  //  49
-                        (int32_t)lastDenomnatrFiltSensor[2],  //  50
-                        (int32_t)lastDenomnatrFiltSensor[3],  //  51
-                        snapshotOldDensity,                   //  52
-                        snapshotNewDensity                    //  53
-
+                        (int32_t)lastNumeratorFiltSensor[0],    //  44
+                        (int32_t)lastNumeratorFiltSensor[1],    //  45
+                        (int32_t)lastNumeratorFiltSensor[2],    //  46
+                        (int32_t)lastNumeratorFiltSensor[3],    //  47
+                        (int32_t)lastDenomnatrFiltSensor[0],    //  48
+                        (int32_t)lastDenomnatrFiltSensor[1],    //  49
+                        (int32_t)lastDenomnatrFiltSensor[2],    //  50
+                        (int32_t)lastDenomnatrFiltSensor[3],    //  51
+                        snapshotOldDensity,                     //  52
+                        snapshotNewDensity,                     //  53
+                        debugLength,                            //  54
+                        debugWidth,                             //  55
+                        debugHeight,                            //  56
+                        debugWeight                             //  57
                 );
                 showTareMark[0] = 0;
                 showTareMark[1] = 0;
@@ -1803,7 +1819,6 @@ static          bool    showDensityHeader = true;
             {
                 dbgSerial.println(F("ReportRawMsmt"));
             }
-
 
             if ((event->data1 & 0x00003FF) == 0x0003FF)
             {
@@ -2327,16 +2342,23 @@ static          bool    showDensityHeader = true;
             if (amountDifference <= 2)
             {
                 //  Sensor seems more stable, filter more by reducing the percentage
-                filterScaling_Pctg[sensorIndex] -= getFilterIncreaseCount(sensorIndex); getFilterIncreaseCount(sensorIndex);
+                filterScaling_Pctg[sensorIndex] *= getFilterIncreasePctg(sensorIndex);
+                filterScaling_Pctg[sensorIndex] /= 100;
                 if (filterScaling_Pctg[sensorIndex] <= 1) filterScaling_Pctg[sensorIndex] = 1;    // Limit the percentage to be above zero
 
                 stabilityCount[sensorIndex]++;
                 stabilityCount[sensorIndex] = min(100, stabilityCount[sensorIndex]);
             }
             else if (amountDifference >= 5)
-            {   //  Release the filter so it drops fast
-                filterScaling_Pctg[sensorIndex] += getFilterReleaseCount(sensorIndex);
-                if (filterScaling_Pctg[sensorIndex] > quantizationLimit[sensorIndex]) filterScaling_Pctg[sensorIndex] = quantizationLimit[sensorIndex]; // Limit the percentage to be quantizationLimit or below
+            {   //  Release the filter so it responds fast.  Bigger Pctg means bigger numerator, more of the raw measurement is used
+                int32_t     difference = quantizationLimit[sensorIndex] - filterScaling_Pctg[sensorIndex];
+                difference                      *= getFilterReleasePctg(sensorIndex);  //  Should be a value [0..100]
+                difference                      /= 100;
+                filterScaling_Pctg[sensorIndex] += difference;
+                 if (filterScaling_Pctg[sensorIndex] > quantizationLimit[sensorIndex] - 1)
+                {   // Limit the percentage to be quantizationLimit or below
+                    filterScaling_Pctg[sensorIndex] = quantizationLimit[sensorIndex] - 1;
+                }
 
 //              dbgSerial.print(F("Release\n"));
                 //  Make stability disappear quickly
@@ -2779,7 +2801,7 @@ static          bool    showDensityHeader = true;
 //                          dbgSerial.print(F(", zero"));
                         }
                     }
-                    newValueIsIdenticalCnt[sensorIndex] += (newValue == lastDisplayedValue[sensorIndex]  &&  newValue >= -10) ? 1 : -newValueIsIdenticalCnt[sensorIndex];
+//                  newValueIsIdenticalCnt[sensorIndex] += (newValue == lastDisplayedValue[sensorIndex]  &&  newValue >= -10) ? 1 : -newValueIsIdenticalCnt[sensorIndex];
                     if (newValueIsIdenticalCnt[sensorIndex] > 10)
                     {
 //                      dbgSerial.print(F(", "));
@@ -2787,6 +2809,10 @@ static          bool    showDensityHeader = true;
 //                      dbgSerial.print(F(", cap"));
                     }
 
+                    if (sensorIndex == sensorType_Weight)
+                    {
+                        printf("");
+                    }
                     //  Starts at 1000, keep measStateGain at 10 or more while in transition
                     if (measStateGain[sensorIndex] > 10) measStateGain[sensorIndex] -= 1000;
                     if (measStateGain[sensorIndex] < 10) measStateGain[sensorIndex]  =  500;
@@ -2850,7 +2876,7 @@ static          bool    showDensityHeader = true;
                         dbgSerial.print(newValueIsIdenticalCnt[sensorIndex]);
                         dbgSerial.println();
                     }
-                        break;
+                    break;
 
                 case measState_measuring:
                     if (sensorIndex == sensorType_Test)

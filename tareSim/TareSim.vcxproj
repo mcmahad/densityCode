@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\accumulationMgr.cpp" />
     <ClCompile Include="..\binning.cpp" />
     <ClCompile Include="..\calibration.cpp" />
     <ClCompile Include="..\eventHandler.cpp" />
@@ -152,6 +153,7 @@
     <ClCompile Include="TareSim.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\accumulationMgr.h" />
     <ClInclude Include="..\calibration.h" />
     <ClInclude Include="..\commonHeader.h" />
     <ClInclude Include="..\events.h" />
