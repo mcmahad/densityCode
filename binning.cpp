@@ -212,6 +212,7 @@ void binningObj_EventHandler(eventQueue_t* event)
 
                 memset(&newStickState, 0, sizeof(newStickState));
 
+                dbgSerial.println(F("Starting new accumulation"));
                 if (ballIndex == 9)
                 {   //  This is the light ball
                     newStickState.boardFeetSum_light   = curentStickLength_mm * curentStickWidth_mm * curentStickHeight_mm;
@@ -239,6 +240,9 @@ void binningObj_EventHandler(eventQueue_t* event)
                 newStickState.stickLengthSum_binned[ballIndex - 1] = curentStickLength_mm;
                 newStickState.boardFeetSum_binned  [ballIndex - 1] = curentStickLength_mm * curentStickWidth_mm * curentStickHeight_mm;
                 newStickState.weightSum_binned     [ballIndex - 1] = curentStickWeight_grams;
+
+                dbgSerial.print(F("adding new values:\n"));
+                accumulationObj_ShowStickStats(&newStickState);
 
                 accumulationObj_ReportNewStickStats(&newStickState);
             }

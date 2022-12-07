@@ -34,7 +34,12 @@ typedef struct
 void accumulationObj_Initialize(void);
 void accumulationObj_EventHandler(const eventQueue_t* event);
 
+void accumulationObj_EnableAccumulationScreen(void);
+void accumulationObj_DisableAccumulationScreen(void);
 void accumulationObj_ReportNewStickStats(const stickState_t *statPtr);
 void accumulationObj_ResetStickStats(void);
 void showMainScreenBftValue(void);
+void showAccumulationScreenAllValues(void);
+void accumulationObj_ShowStickStats(stickState_t *statPtr);
+
 

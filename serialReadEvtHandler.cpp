@@ -14,6 +14,7 @@
 #include "serialReadEvtHandler.h"
 #include "calibration.h"
 #include "msmtMgrEvtHandler.h"
+#include "accumulationMgr.h"
 
 
 #define     MAX_READ_BUFFER_BYTES       25
@@ -46,6 +47,8 @@ static const char PROGMEM    cmdString_ToggleTareState[] PROGMEM = "tstate";    
 static const char PROGMEM    cmdString_VersionReqState[] PROGMEM = "vreq";      //  ask for the current version string
 static const char PROGMEM    cmdString_TallyStatus[] PROGMEM = "tallyStatus,";  //  init a new random key
 static const char PROGMEM    cmdString_TallyValid[] PROGMEM = "tallyValid,";  //  We got a new validation response
+static const char PROGMEM    cmdString_AccumScreenEnable[]  PROGMEM = "showAccum";  //  Show accumulation screen
+static const char PROGMEM    cmdString_AccumScreenDisable[] PROGMEM = "hideAccum";  //  Hide accumulation screen
 
 
 static event_t parseNewCommand(uint8_t *cmdPtr)
@@ -78,8 +81,8 @@ static event_t parseNewCommand(uint8_t *cmdPtr)
     else if (strncmp_P((char *)cmdPtr, cmdString_ToggleTareState, 6) == 0) returnValue = serialReadEvt_ToggleTareDebugState;
     else if (strncmp_P((char *)cmdPtr, cmdString_ToggleLogState,  4) == 0) returnValue = serialReadEvt_ToggleLogDebugState;
     else if (strncmp_P((char *)cmdPtr, cmdString_VersionReqState, 4) == 0) returnValue = serialReadEvt_RequestVersionInfo;
-    else if (strncmp_P((char *)cmdPtr, cmdString_TallyStatus,    12) == 0) returnValue = serialReadEvt_TallyStatus;
-    else if (strncmp_P((char *)cmdPtr, cmdString_TallyValid,     11) == 0) returnValue = serialReadEvt_TallyValid;
+    else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenEnable,  9) == 0) returnValue = serialReadEvt_AccumScreenEnable;
+    else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenDisable, 9) == 0) returnValue = serialReadEvt_AccumScreenDisable;
 
     if (returnValue == serialReadEvt_FastFwdCmd)
     {
@@ -578,6 +581,16 @@ void serialReadObj_EventHandler(eventQueue_t* event)
                                     nextionSerial.print(F("Version.txt=\""));
                                     nextionSerial.print(F(__DATE__));
                                     nextionSerial.print(F("\"\xFF\xFF\xFF"));
+                                    break;
+
+                                case serialReadEvt_AccumScreenEnable:
+                                    dbgSerial.print  (F("AccumScreenEnable\n"));
+                                    accumulationObj_EnableAccumulationScreen();
+                                    break;
+
+                                case serialReadEvt_AccumScreenDisable:
+                                    dbgSerial.print  (F("AccumScreenDisable\n"));
+                                    accumulationObj_DisableAccumulationScreen();
                                     break;
 
                                 case serialReadEvt_TallyStatus:

@@ -2,6 +2,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #if  !defined(_WIN32)
+#include <stdio.h>
+#include <stdlib.h>
 #include "Arduino.h"
 
 extern HardwareSerial& dbgSerial;
@@ -22,6 +24,7 @@ static  HardwareSerial      dbgSerial,
 #include "accumulationMgr.h"
 
 
+static bool             accumulationScreenIsActive = false;
 static stickState_t     currentStickStats;
 
 /*  Binning in the QR code will be as follows:
@@ -46,6 +49,12 @@ static stickState_t     currentStickStats;
 
 void accumulationObj_ReportNewStickStats(const stickState_t *statPtr)
 {
+    dbgSerial.print(F("ReportNewStickStats() entry\n"));
+
+    dbgSerial.print(F("startStats:\n"));
+    accumulationObj_ShowStickStats(&currentStickStats);
+    dbgSerial.print(F("\n\n"));
+
     //  Add in all the new stats
     currentStickStats.weightSum_light      += statPtr->weightSum_light;
     currentStickStats.weightSum_heavy      += statPtr->weightSum_heavy;
@@ -62,18 +71,70 @@ void accumulationObj_ReportNewStickStats(const stickState_t *statPtr)
 
     for (int index = 0; index < MAX_ACCUM_BINS; index++)
     {
-        currentStickStats.boardFeetSum_binned  [index] += statPtr->boardFeetSum_binned[index];
-        currentStickStats.stickCount_binned    [index] += statPtr->stickCount_binned[index];
+        currentStickStats.boardFeetSum_binned  [index] += statPtr->boardFeetSum_binned  [index];
+        currentStickStats.stickCount_binned    [index] += statPtr->stickCount_binned    [index];
         currentStickStats.stickLengthSum_binned[index] += statPtr->stickLengthSum_binned[index];
-        currentStickStats.weightSum_binned     [index] += statPtr->weightSum_binned[index];
+        currentStickStats.weightSum_binned     [index] += statPtr->weightSum_binned     [index];
     }
+
+    //  Update the displayed values
+    showAccumulationScreenAllValues();
+
+    dbgSerial.print(F("BFt[8]="));
+    dbgSerial.print(currentStickStats.boardFeetSum_binned[8]);
+    dbgSerial.print(F("\n"));
+
+    dbgSerial.print(F("Length[8]="));
+    dbgSerial.print(currentStickStats.stickLengthSum_binned[8]);
+    dbgSerial.print(F("\n"));
+
+    dbgSerial.print(F("Weight[8]="));
+    dbgSerial.print(currentStickStats.weightSum_binned[8]);
+    dbgSerial.print(F("\n"));
+
+    dbgSerial.print(F("Count[8]="));
+    dbgSerial.print(currentStickStats.stickLengthSum_binned[8]);
+    dbgSerial.print(F("\n"));
+
+    dbgSerial.print(F("\nendStats:\n"));
+    accumulationObj_ShowStickStats(&currentStickStats);
+    dbgSerial.print(F("\n\n"));
+}
+
+
+void accumulationObj_EnableAccumulationScreen(void)
+{
+    accumulationScreenIsActive = true;
+    showAccumulationScreenAllValues();
+}
+
+
+void accumulationObj_DisableAccumulationScreen(void)
+{
+    accumulationScreenIsActive = false;
+}
+
+
+void writeFpValueToString(float fltVal, int length, const char *destPtr)
+{
+    int     decimalCnt = 0;
+
+         if (fltVal ==     0.0f) decimalCnt = length - 2;
+    else if (fltVal  <    10.0f) decimalCnt = length - 2;
+    else if (fltVal  <   100.0f) decimalCnt = length - 3;
+    else if (fltVal  <  1000.0f) decimalCnt = length - 4;
+    else if (fltVal  < 10000.0f) decimalCnt = length - 5;
+    else                         decimalCnt = length - 6;
+    if (length < 0) length = 0;
+
+    dtostrf(fltVal, length, decimalCnt, destPtr);
 }
 
 
 //  This string should be at least 192+1 characters long to hold the entire QR code
 void makeQrCodeAccumulationString(char *accumulationString)
 {
-    int     tmpBft,
+    int32_t tmpBft,
             tmpLength,
             tmpCount,
             tmpWeight,
@@ -86,6 +147,10 @@ void makeQrCodeAccumulationString(char *accumulationString)
     //  Fill 7 slots with all binned accumulations
     for (index = 0; index < 7; index++)
     {
+        tmpBft    = 0;
+        tmpLength = 0;
+        tmpCount  = 0;
+        tmpWeight = 0;
         switch (index)
         {
         case 0:     //  light sticks
@@ -142,7 +207,6 @@ void makeQrCodeAccumulationString(char *accumulationString)
         sprintf(fillPtr, "%d,", tmpCount);
         while (*fillPtr) fillPtr++;
 
-
         //  Convert grams to kg
         sprintf(fillPtr, "%d,", tmpWeight / 1000);
         while (*fillPtr) fillPtr++;
@@ -150,53 +214,24 @@ void makeQrCodeAccumulationString(char *accumulationString)
 
         //  Convert mm^3 to BFt
         myFloat = (float)tmpBft / 2359737.225974f;
-        if (myFloat < 10.0f)
-        {
-            sprintf(fillPtr, "%6.4f,", myFloat);      //  Convert mm^3 to BFt
-        }
-        else if (tmpBft < 100.0f)
-        {
-            sprintf(fillPtr, "%6.3f,", myFloat);      //  Convert mm^3 to BFt
-        }
-        else if (tmpBft < 1000.0f)
-        {
-            sprintf(fillPtr, "%6.2f,", myFloat);      //  Convert mm^3 to BFt
-        }
-        else if (tmpBft < 10000.0f)
-        {
-            sprintf(fillPtr, "%6.1f,", myFloat);      //  Convert mm^3 to BFt
-        }
-        else
-        {
-            sprintf(fillPtr, "%6.0f,", myFloat);      //  Convert mm^3 to BFt
-        }
-        while (*fillPtr) fillPtr++;
+        writeFpValueToString(myFloat, 6, fillPtr);
 
+        dbgSerial.print(F("BFt value="));
+        dbgSerial.print(tmpBft);
+        dbgSerial.print(F(" "));
+        dbgSerial.print((float)myFloat);
+        dbgSerial.print(fillPtr);
+
+        while (*fillPtr) fillPtr++;
+        strcpy(fillPtr, ",");
+        while (*fillPtr) fillPtr++;
         
         //  Convert mm to meters of length
         myFloat = (float)tmpLength / 1000.0f;
-        if (myFloat < 10.0f)
-        {
-            sprintf(fillPtr, "%5.3f,", myFloat);     //  Convert mm to meters of length
-        }
-        else if (tmpLength < 100.0f)
-        {
-            sprintf(fillPtr, "%5.2f,", myFloat);     //  Convert mm to meters of length
-        }
-        else if (tmpLength < 1000.0f)
-        {
-            sprintf(fillPtr, "%5.1f,", myFloat);     //  Convert mm to meters of length
-        }
-        else
-        {
-            sprintf(fillPtr, "%5.0f,", myFloat);     //  Convert mm to meters of length
-        }
+        writeFpValueToString(myFloat, 5, fillPtr);
+
         while (*fillPtr) fillPtr++;
     }
-
-    //  Back up one character at the end and make it a newline
-    fillPtr--;
-    *fillPtr = '\n';
 }
 
 
@@ -208,42 +243,26 @@ void showMainScreenBftValue(void)
 
     float       bft_float = (float)bftSum / 2359737.225974f;    //  Convert mm^3 to BFt
 
-    char        displayString[30];
+    char        displayString[20];
 
-    if (bft_float < 10.0f)
-    {
-        sprintf(displayString, "%6.4f,", bft_float);    //  Convert mm^3 to BFt
-    }
-    else if (bft_float < 100.0f)
-    {
-        sprintf(displayString, "%6.3f,", bft_float);   //  Convert mm^3 to BFt
-    }
-    else if (bft_float < 1000.0f)
-    {
-        sprintf(displayString, "%6.2f,", bft_float);   //  Convert mm^3 to BFt
-    }
-    else if (bft_float < 10000.0f)
-    {
-        sprintf(displayString, "%6.1f,", bft_float);   //  Convert mm^3 to BFt
-    }
-    else
-    {
-        sprintf(displayString, "%6.0f,", bft_float);   //  Convert mm^3 to BFt
-    }
+    dtostrf(bft_float, 6, 1, displayString);
 
-    nextionSerial.print(F("bft.val="));
+    nextionSerial.print(F("bft.txt=\""));
     nextionSerial.print(displayString);
-    nextionSerial.print(F("\xFF\xFF\xFF"));
+    nextionSerial.print(F("\"\xFF\xFF\xFF"));
 
-    //  Now send the QR code
-    char    qrCodeStringBuffer[200];
-    qrCodeStringBuffer[200];
+    dbgSerial.print(F("bftSum="));
+    dbgSerial.print(bftSum);
+    dbgSerial.print(F("  float="));
+    dbgSerial.print(bft_float);
+    dbgSerial.print(F("  displayString="));
+    dbgSerial.print(displayString);
+    dbgSerial.print(F("\xFF\xFF\xFF"));
 
-    makeQrCodeAccumulationString(qrCodeStringBuffer);
-
-    nextionSerial.print(F("qr.txt="));
-    nextionSerial.print(qrCodeStringBuffer);
-    nextionSerial.print(F("\xFF\xFF\xFF"));
+    dbgSerial.print(F("bft.txt=\""));
+    dbgSerial.print(displayString);
+    dbgSerial.print(F("\"\xFF\xFF\xFF"));
+    dbgSerial.print(F("\n"));
 }
 
 
@@ -259,6 +278,13 @@ void showAccumulationScreenAllValues(void)
 
     float       myFloat;
 
+    dbgSerial.print(F("showAccumulationScreenAllValues() entry\n"));
+    if (!accumulationScreenIsActive)
+    {   //  There is nothing to show, we are on the wrong screen
+        return;
+    }
+
+    dbgSerial.print(F("showAccumulationScreenAllValues() continues\n"));
     //  Fill 3 slots with light/good/heavy binned accumulations
     for (index = 0; index < 3; index++)
     {
@@ -287,89 +313,121 @@ void showAccumulationScreenAllValues(void)
         }
 
         //  Print the stick count
-        sprintf(displayString, "%d,", tmpCount);
+        sprintf(displayString, "%d", tmpCount);
         
         switch (index)
         {
-        case 0: nextionSerial.print(F("ltCnt.val="   )); break;
-        case 1: nextionSerial.print(F("goodCnt.val=" )); break;
-        case 2: nextionSerial.print(F("heavyCnt.val=")); break;
+        case 0: nextionSerial.print(F("ltCnt.txt=\""   )); dbgSerial.print(F("ltCnt.txt=\""   )); break;
+        case 1: nextionSerial.print(F("goodCnt.txt=\"" )); dbgSerial.print(F("goodCnt.txt=\"" )); break;
+        case 2: nextionSerial.print(F("heavyCnt.txt=\"")); dbgSerial.print(F("heavyCnt.txt=\"")); break;
         }
-        nextionSerial.print(displayString);
-        nextionSerial.print(F("\xFF\xFF\xFF"));
-
+        nextionSerial.print(displayString);       dbgSerial.print(displayString);
+        nextionSerial.print(F("\"\xFF\xFF\xFF")); dbgSerial.print(F("\"\n"));
 
         //  Convert grams to kg
-        sprintf(displayString, "%d,", tmpWeight / 1000);
+        myFloat = (float)tmpWeight / 1000.0;
+        if (myFloat < 10.0f)
+        {
+            dtostrf(myFloat, 6, 2, displayString);
+        }
+        else if (tmpBft < 100.0f)
+        {
+            dtostrf(myFloat, 6, 2, displayString);
+        }
+        else if (tmpBft < 1000.0f)
+        {
+            dtostrf(myFloat, 6, 2, displayString);
+        }
+        else if (tmpBft < 10000.0f)
+        {
+            dtostrf(myFloat, 6, 1, displayString);
+        }
+        else
+        {
+            dtostrf(myFloat, 6, 0, displayString);
+        }
+
         switch (index)
         {
-        case 0: nextionSerial.print(F("ltWeight.val="   )); break;
-        case 1: nextionSerial.print(F("goodWeight.val=" )); break;
-        case 2: nextionSerial.print(F("heavyWeight.val=")); break;
+        case 0: nextionSerial.print(F("ltWeight.txt=\""   )); break;
+        case 1: nextionSerial.print(F("goodWeight.txt=\"" )); break;
+        case 2: nextionSerial.print(F("heavyWeight.txt=\"")); break;
         }
         nextionSerial.print(displayString);
-        nextionSerial.print(F("\xFF\xFF\xFF"));
-
+        nextionSerial.print(F("\"\xFF\xFF\xFF"));
 
         //  Convert mm^3 to BFt
         myFloat = (float)tmpBft / 2359737.225974f;
         if (myFloat < 10.0f)
         {
-            sprintf(displayString, "%6.4f,", myFloat);      //  Convert mm^3 to BFt
+            dtostrf(myFloat, 6, 2, displayString);
         }
         else if (tmpBft < 100.0f)
         {
-            sprintf(displayString, "%6.3f,", myFloat);      //  Convert mm^3 to BFt
+            dtostrf(myFloat, 6, 2, displayString);
         }
         else if (tmpBft < 1000.0f)
         {
-            sprintf(displayString, "%6.2f,", myFloat);      //  Convert mm^3 to BFt
+            dtostrf(myFloat, 6, 2, displayString);
         }
         else if (tmpBft < 10000.0f)
         {
-            sprintf(displayString, "%6.1f,", myFloat);      //  Convert mm^3 to BFt
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else
         {
-            sprintf(displayString, "%6.0f,", myFloat);      //  Convert mm^3 to BFt
+            dtostrf(myFloat, 6, 0, displayString);
         }
         switch (index)
         {
-        case 0: nextionSerial.print(F("ltVolume.val="   )); break;
-        case 1: nextionSerial.print(F("goodVolume.val=" )); break;
-        case 2: nextionSerial.print(F("heavyVolume.val=")); break;
+        case 0: nextionSerial.print(F("ltVolume.txt=\""   )); dbgSerial.print(F("ltVolume.txt=\""   )); break;
+        case 1: nextionSerial.print(F("goodVolume.txt=\"" )); dbgSerial.print(F("goodVolume.txt=\"" )); break;
+        case 2: nextionSerial.print(F("heavyVolume.txt=\"")); dbgSerial.print(F("heavyVolume.txt=\"")); break;
         }
-        nextionSerial.print(displayString);
-        nextionSerial.print(F("\xFF\xFF\xFF"));
+        nextionSerial.print(displayString);       dbgSerial.print(displayString);
+        nextionSerial.print(F("\"\xFF\xFF\xFF")); dbgSerial.print(F("\"\n"));
 
-        
         //  Convert mm to meters of length
         myFloat = (float)tmpLength / 1000.0f;
         if (myFloat < 10.0f)
         {
-            sprintf(displayString, "%5.3f,", myFloat);     //  Convert mm to meters of length
+            dtostrf(myFloat, 6, 2, displayString);
         }
         else if (tmpLength < 100.0f)
         {
-            sprintf(displayString, "%5.2f,", myFloat);     //  Convert mm to meters of length
+            dtostrf(myFloat, 6, 2, displayString);
         }
         else if (tmpLength < 1000.0f)
         {
-            sprintf(displayString, "%5.1f,", myFloat);     //  Convert mm to meters of length
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else
         {
-            sprintf(displayString, "%5.0f,", myFloat);     //  Convert mm to meters of length
+            dtostrf(myFloat, 6, 0, displayString);
         }
         switch (index)
         {
-        case 0: nextionSerial.print(F("ltLength.val="   )); break;
-        case 1: nextionSerial.print(F("goodLength.val=" )); break;
-        case 2: nextionSerial.print(F("heavyLength.val=")); break;
+        case 0: nextionSerial.print(F("ltLength.txt=\""   )); dbgSerial.print(F("ltLength.txt=\""   )); break;
+        case 1: nextionSerial.print(F("goodLength.txt=\"" )); dbgSerial.print(F("goodLength.txt=\"" )); break;
+        case 2: nextionSerial.print(F("heavyLength.txt=\"")); dbgSerial.print(F("heavyLength.txt=\"")); break;
         }
-        nextionSerial.print(displayString);
-        nextionSerial.print(F("\xFF\xFF\xFF"));
+        nextionSerial.print(displayString);         dbgSerial.print(displayString);
+        nextionSerial.print(F("\"\xFF\xFF\xFF"));   dbgSerial.print(F("\"\n"));
     }
+
+    //  Now send the QR code
+    char    qrCodeStringBuffer[200];
+    qrCodeStringBuffer[200];
+
+    makeQrCodeAccumulationString(qrCodeStringBuffer);
+
+    nextionSerial.print(F("qr.txt=\""));
+    nextionSerial.print(qrCodeStringBuffer);
+    nextionSerial.print(F("\"\xFF\xFF\xFF"));
+
+    dbgSerial.print(F("qr.txt=\""));
+    dbgSerial.print(qrCodeStringBuffer);
+    dbgSerial.print(F("\"\n"));
 }
 
 
@@ -380,4 +438,22 @@ void accumulationObj_Initialize(void)
 
 void accumulationObj_EventHandler(eventQueue_t* event)
 {
+}
+
+void accumulationObj_ShowStickStats(stickState_t *statPtr)
+{
+    for (int index = 0; index < MAX_ACCUM_BINS; index++)
+    {
+        dbgSerial.print(F("["));
+        dbgSerial.print(index);
+        dbgSerial.print(F("] Cnt="));
+        dbgSerial.print(statPtr->stickCount_binned[index]);
+        dbgSerial.print(F("  length="));
+        dbgSerial.print(statPtr->stickLengthSum_binned[index]);
+        dbgSerial.print(F("  Bft="));
+        dbgSerial.print(statPtr->boardFeetSum_binned [index]);
+        dbgSerial.print(F("  Weight="));
+        dbgSerial.print(statPtr->weightSum_binned[index]);
+        dbgSerial.print(F("\n"));
+    }
 }

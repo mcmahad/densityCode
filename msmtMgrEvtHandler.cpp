@@ -20,6 +20,7 @@
 #include "msmtMgrEvtHandler.h"
 #include "graphing.h"
 #include "tallyTracker.h"
+#include "accumulationMgr.h"
 
 #ifdef  _WIN32
 static  HardwareSerial      dbgSerial,
@@ -1602,6 +1603,7 @@ static      int8_t      colorIndex   = 0;
                         delay(POST_SERIAL_PAUSE_MSEC);
                         dbgSerial.println(F("Showed stick Count"));
                     }
+                    showMainScreenBftValue();
 #endif  //  _WIN32
                 }
             }
@@ -1626,10 +1628,7 @@ static      int8_t      colorIndex   = 0;
                     nextionSerial.print(F("\"\xFF\xFF\xFF"));
                     delay(POST_SERIAL_PAUSE_MSEC);
                 }
-
-                if (tallyTrkObj_GetStickCount() == 0)
-                {
-                }
+                showMainScreenBftValue();
 #endif // !_WIN32
             }
 

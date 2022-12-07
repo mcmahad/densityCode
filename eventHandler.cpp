@@ -18,7 +18,7 @@
 #include "tallyTracker.h"
 #include "binning.h"
 
-#define MAX_EVENTS    15
+#define MAX_EVENTS    20
 
 eventQueue_t    eventQueue[MAX_EVENTS],
                 *eventQueueHeadPtr = eventQueue,

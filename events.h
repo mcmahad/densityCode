@@ -72,6 +72,8 @@ typedef enum
     serialReadEvt_RequestVersionInfo,
     serialReadEvt_TallyStatus,
     serialReadEvt_TallyValid,
+    serialReadEvt_AccumScreenEnable,
+    serialReadEvt_AccumScreenDisable,
 
     msmtMgrEvt_baseId = OBJ2EVT_BASE(evtObj_MsmtMgr),
     msmtMgrEvt_SetReportRate,
