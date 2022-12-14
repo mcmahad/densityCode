@@ -36,6 +36,7 @@ void accumulationObj_EventHandler(const eventQueue_t* event);
 
 void accumulationObj_EnableAccumulationScreen(void);
 void accumulationObj_DisableAccumulationScreen(void);
+void accumulationObj_ClearAccumulationScreen(void);
 void accumulationObj_ReportNewStickStats(const stickState_t *statPtr);
 void accumulationObj_ResetStickStats(void);
 void showMainScreenBftValue(void);

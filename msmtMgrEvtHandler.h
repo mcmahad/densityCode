@@ -6,7 +6,7 @@
 #include "events.h"
 #include "calibration.h"
 
-//  #define FORCED_HEIGHT_VALUE       220
+//  #define FORCED_HEIGHT_VALUE      220
 //  #define FORCED_WEIGHT_VALUE      250
 
 
@@ -25,3 +25,4 @@ bool shouldShowTareStateForDebug(void);
 void setReportedRawAndFilteredValues(int32_t reportedRawValue, uint32_t reportedFilteredValue);
 
 void showMeasCsv_NotRaw(void);
+

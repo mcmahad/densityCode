@@ -49,6 +49,7 @@ static const char PROGMEM    cmdString_TallyStatus[] PROGMEM = "tallyStatus,";  
 static const char PROGMEM    cmdString_TallyValid[] PROGMEM = "tallyValid,";  //  We got a new validation response
 static const char PROGMEM    cmdString_AccumScreenEnable[]  PROGMEM = "showAccum";  //  Show accumulation screen
 static const char PROGMEM    cmdString_AccumScreenDisable[] PROGMEM = "hideAccum";  //  Hide accumulation screen
+static const char PROGMEM    cmdString_AccumScreenClear  [] PROGMEM = "clearAccum"; // Clear accumulation screen
 
 
 static event_t parseNewCommand(uint8_t *cmdPtr)
@@ -83,6 +84,7 @@ static event_t parseNewCommand(uint8_t *cmdPtr)
     else if (strncmp_P((char *)cmdPtr, cmdString_VersionReqState, 4) == 0) returnValue = serialReadEvt_RequestVersionInfo;
     else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenEnable,  9) == 0) returnValue = serialReadEvt_AccumScreenEnable;
     else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenDisable, 9) == 0) returnValue = serialReadEvt_AccumScreenDisable;
+    else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenClear,  10) == 0) returnValue = serialReadEvt_AccumScreenClear;
 
     if (returnValue == serialReadEvt_FastFwdCmd)
     {
@@ -591,6 +593,11 @@ void serialReadObj_EventHandler(eventQueue_t* event)
                                 case serialReadEvt_AccumScreenDisable:
                                     dbgSerial.print  (F("AccumScreenDisable\n"));
                                     accumulationObj_DisableAccumulationScreen();
+                                    break;
+
+                                case serialReadEvt_AccumScreenClear:
+                                    dbgSerial.print  (F("AccumScreenClear\n"));
+                                    accumulationObj_ClearAccumulationScreen();
                                     break;
 
                                 case serialReadEvt_TallyStatus:

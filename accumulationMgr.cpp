@@ -115,6 +115,14 @@ void accumulationObj_DisableAccumulationScreen(void)
 }
 
 
+void accumulationObj_ClearAccumulationScreen(void)
+{
+    dbgSerial.print(F("ClearAccumulationScreen\n"));
+    memset(&currentStickStats, 0, sizeof(currentStickStats));
+    showAccumulationScreenAllValues();
+}
+
+
 void writeFpValueToString(float fltVal, int length, const char *destPtr)
 {
     int     decimalCnt = 0;
@@ -225,7 +233,7 @@ void makeQrCodeAccumulationString(char *accumulationString)
         while (*fillPtr) fillPtr++;
         strcpy(fillPtr, ",");
         while (*fillPtr) fillPtr++;
-        
+
         //  Convert mm to meters of length
         myFloat = (float)tmpLength / 1000.0f;
         writeFpValueToString(myFloat, 5, fillPtr);
@@ -314,7 +322,7 @@ void showAccumulationScreenAllValues(void)
 
         //  Print the stick count
         sprintf(displayString, "%d", tmpCount);
-        
+
         switch (index)
         {
         case 0: nextionSerial.print(F("ltCnt.txt=\""   )); dbgSerial.print(F("ltCnt.txt=\""   )); break;
@@ -328,15 +336,15 @@ void showAccumulationScreenAllValues(void)
         myFloat = (float)tmpWeight / 1000.0;
         if (myFloat < 10.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpBft < 100.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpBft < 1000.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpBft < 10000.0f)
         {
@@ -360,15 +368,15 @@ void showAccumulationScreenAllValues(void)
         myFloat = (float)tmpBft / 2359737.225974f;
         if (myFloat < 10.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpBft < 100.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpBft < 1000.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpBft < 10000.0f)
         {
@@ -391,11 +399,11 @@ void showAccumulationScreenAllValues(void)
         myFloat = (float)tmpLength / 1000.0f;
         if (myFloat < 10.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpLength < 100.0f)
         {
-            dtostrf(myFloat, 6, 2, displayString);
+            dtostrf(myFloat, 6, 1, displayString);
         }
         else if (tmpLength < 1000.0f)
         {
