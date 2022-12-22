@@ -338,7 +338,7 @@ void showAccumulationScreenAllValues(void)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
-        else if (tmpBft < 100.0f)
+        else if (myFloat < 100.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
@@ -370,15 +370,15 @@ void showAccumulationScreenAllValues(void)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
-        else if (tmpBft < 100.0f)
+        else if (myFloat < 100.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
-        else if (tmpBft < 1000.0f)
+        else if (myFloat < 1000.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
-        else if (tmpBft < 10000.0f)
+        else if (myFloat < 10000.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
@@ -401,11 +401,11 @@ void showAccumulationScreenAllValues(void)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
-        else if (tmpLength < 100.0f)
+        else if (myFloat < 100.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }
-        else if (tmpLength < 1000.0f)
+        else if (myFloat < 1000.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
         }

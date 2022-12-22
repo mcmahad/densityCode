@@ -1571,7 +1571,7 @@ static      int8_t      colorIndex   = 0;
 
                     sendEvent(tallyTrkEvt_DensityPublished, (int32_t)(totalDensity_kgPerMeter3 * 10.0), 0);
                     sendEvent(timerEvt_cancelTimer, msmtMgrEvt_ForceDensityDisplayUpdate, 0);
-                    sendEvent(timerEvt_startTimer,  msmtMgrEvt_ForceDensityDisplayUpdate, 200);
+                    sendEvent(timerEvt_startTimer,  msmtMgrEvt_ForceDensityDisplayUpdate, 50);
 //                  dbgSerial.println(F("Stick Count density published"));
 
 #ifdef  _WIN32
@@ -1603,7 +1603,7 @@ static      int8_t      colorIndex   = 0;
                         delay(POST_SERIAL_PAUSE_MSEC);
                         dbgSerial.println(F("Showed stick Count"));
                     }
-                    showMainScreenBftValue();
+                    sendEvent(timerEvt_startTimer, msmtMgrEvt_ReportMainScreenAccumulations, 60);
 #endif  //  _WIN32
                 }
             }
@@ -1628,7 +1628,7 @@ static      int8_t      colorIndex   = 0;
                     nextionSerial.print(F("\"\xFF\xFF\xFF"));
                     delay(POST_SERIAL_PAUSE_MSEC);
                 }
-                showMainScreenBftValue();
+                sendEvent(timerEvt_startTimer, msmtMgrEvt_ReportMainScreenAccumulations, 60);
 #endif // !_WIN32
             }
 
@@ -3070,6 +3070,10 @@ static          bool    showSensorHeader    = true;
 
     case msmtMgrEvt_ReportPing:
         dbgSerial.println("msmtMgrEvt_ReportPing");
+        break;
+
+    case msmtMgrEvt_ReportMainScreenAccumulations:
+        showMainScreenBftValue();
         break;
 
     default:

@@ -95,6 +95,7 @@ typedef enum
     msmtMgrEvt_ReportCalibrationSet1,
     msmtMgrEvt_ReportCalibrationSet2,
     msmtMgrEvt_ForceDensityDisplayUpdate,
+    msmtMgrEvt_ReportMainScreenAccumulations,
 
     adcCvtEvt_baseId = OBJ2EVT_BASE(evtObj_AdcCvt),
     adcCvtEvt_InitializeConverter,                    //  Initialize the entire ADC converter
