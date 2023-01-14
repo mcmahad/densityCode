@@ -5,5 +5,7 @@
 
 EEPROM_t  EEPROM;
 
+void dtostrf(double fltVal, int length, int decimalCnt, char const * destStr) {}
+
 #endif
 

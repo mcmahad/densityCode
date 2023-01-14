@@ -17,6 +17,7 @@
 #include "adcCvtEvtHandler.h"
 #include "tallyTracker.h"
 #include "binning.h"
+#include "accumulationMgr.h"
 
 #define MAX_EVENTS    20
 
@@ -172,14 +173,15 @@ void processEvents(void)
 
         switch (EVT2OBJ(eventQueueTailPtr->eventId))
         {
-        case evtObj_Timer:         timerObj_EventHandler      (eventQueueTailPtr); break;
-        case evtObj_MsmtMgr:       msmtMgrObj_EventHandler    (eventQueueTailPtr); break;
-        case evtObj_TallyTracker:  tallyTrkObj_EventHandler   (eventQueueTailPtr); break;
-        case evtObj_Binning:       binningObj_EventHandler    (eventQueueTailPtr); break;
+        case evtObj_Timer:         timerObj_EventHandler            (eventQueueTailPtr); break;
+        case evtObj_MsmtMgr:       msmtMgrObj_EventHandler          (eventQueueTailPtr); break;
+        case evtObj_TallyTracker:  tallyTrkObj_EventHandler         (eventQueueTailPtr); break;
+        case evtObj_Binning:       binningObj_EventHandler          (eventQueueTailPtr); break;
 #ifndef _WIN32
-        case evtObj_LoadCell:      loadCellObj_EventHandler   (eventQueueTailPtr); break;
-        case evtObj_SerialRead:    serialReadObj_EventHandler (eventQueueTailPtr); break;
-        case evtObj_AdcCvt:        adcCvtObj_EventHandler     (eventQueueTailPtr); break;
+        case evtObj_LoadCell:      loadCellObj_EventHandler         (eventQueueTailPtr); break;
+        case evtObj_SerialRead:    serialReadObj_EventHandler       (eventQueueTailPtr); break;
+        case evtObj_AdcCvt:        adcCvtObj_EventHandler           (eventQueueTailPtr); break;
+        case evtObj_Accumulation:  accumulationObj_EventHandler     (eventQueueTailPtr); break;
 #endif // !_WIN32
         default:
             if (eventQueueTailPtr->eventId != systemEvt_nullEvt)
@@ -234,6 +236,8 @@ void initializeEvents(void)
     tallyTrkObj_Initialize();
 
 #ifndef _WIN32
+    accumulationObj_Initialize();
+
     adcCvtObj_Initialize();
     dbgSerial.println(F("Init done, #3"));
     loadCellObj_Initialize();

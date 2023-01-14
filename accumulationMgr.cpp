@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Arduino.h"
+#include "events.h"
+#include "accumulationMgr.h"
+#include "calibration.h"
 
 extern HardwareSerial& dbgSerial;
 extern HardwareSerial& nextionSerial;
@@ -19,9 +22,6 @@ static  HardwareSerial      dbgSerial,
 
 #define     _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
-
-#include "events.h"
-#include "accumulationMgr.h"
 
 
 static bool             accumulationScreenIsActive = false;
@@ -46,6 +46,10 @@ static stickState_t     currentStickStats;
             Weight
             Length
 */
+
+/*  Number of sticks processed since the last write to persistent memory
+*/
+static      int16_t     accumulationStickCountSinceLastWrite;
 
 void accumulationObj_ReportNewStickStats(const stickState_t *statPtr)
 {
@@ -99,6 +103,17 @@ void accumulationObj_ReportNewStickStats(const stickState_t *statPtr)
     dbgSerial.print(F("\nendStats:\n"));
     accumulationObj_ShowStickStats(&currentStickStats);
     dbgSerial.print(F("\n\n"));
+
+    //  Start or restart the idle timer
+    sendEvent(timerEvt_cancelTimer, accumulationEvt_DataWriteToFlashTimeout, 0);
+    sendEvent(timerEvt_startTimer, accumulationEvt_DataWriteToFlashTimeout, 1000 * 60 * 10);        //  Force an update after 10 minutes inactivity
+
+    accumulationStickCountSinceLastWrite++;
+    if (accumulationStickCountSinceLastWrite >= 100)
+    {
+        //  Send the timeout write event to cause a write to EEPROM.
+        sendEvent(accumulationEvt_DataWriteToFlashTimeout, 0, 0);
+    }
 }
 
 
@@ -333,7 +348,7 @@ void showAccumulationScreenAllValues(void)
         nextionSerial.print(F("\"\xFF\xFF\xFF")); dbgSerial.print(F("\"\n"));
 
         //  Convert grams to kg
-        myFloat = (float)tmpWeight / 1000.0;
+        myFloat = (float)tmpWeight / 1000.0f;
         if (myFloat < 10.0f)
         {
             dtostrf(myFloat, 6, 1, displayString);
@@ -425,7 +440,6 @@ void showAccumulationScreenAllValues(void)
 
     //  Now send the QR code
     char    qrCodeStringBuffer[200];
-    qrCodeStringBuffer[200];
 
     makeQrCodeAccumulationString(qrCodeStringBuffer);
 
@@ -441,11 +455,24 @@ void showAccumulationScreenAllValues(void)
 
 void accumulationObj_Initialize(void)
 {
+    accumulationStickCountSinceLastWrite = 0;
 }
 
 
-void accumulationObj_EventHandler(eventQueue_t* event)
+void accumulationObj_EventHandler(const eventQueue_t* event)
 {
+    switch (event->eventId)
+    {
+    case accumulationEvt_DataWriteToFlashTimeout:
+        if (accumulationStickCountSinceLastWrite > 0)
+        {
+            //  Write data to Flash
+            accumulationStickCountSinceLastWrite = 0;
+            sendEvent(timerEvt_cancelTimer, accumulationEvt_DataWriteToFlashTimeout, 0);
+            writeCalDataToFlash();
+        }
+        break;
+    }
 }
 
 void accumulationObj_ShowStickStats(stickState_t *statPtr)
@@ -464,4 +491,11 @@ void accumulationObj_ShowStickStats(stickState_t *statPtr)
         dbgSerial.print(statPtr->weightSum_binned[index]);
         dbgSerial.print(F("\n"));
     }
+}
+
+
+void *getAccumulationDataStructure(int16_t* accumDataSize)
+{
+    *accumDataSize = sizeof(currentStickStats);
+    return &currentStickStats;
 }

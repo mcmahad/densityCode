@@ -127,8 +127,7 @@ typedef enum
     binningEvt_SetCurrentStickDensity,
 
     accumulationEvt_baseId = OBJ2EVT_BASE(evtObj_Accumulation),
-    accumulationEvt_LogNewStickInfo,
-    accumulationEvt_ResetStickCounts,
+    accumulationEvt_DataWriteToFlashTimeout,
 } event_t;
 
 

@@ -115,7 +115,7 @@ void binningObj_EventHandler(eventQueue_t* event)
                 measurement inaccuracy.
 
                 Each measurement (l/h/w/wt) is assigned an uncertainty value, like 2.3mm or 1.6grams.
-                The outer limits are sccaled in by the pctg found from uncertainty/current measurement
+                The outer limits are scaled in by the pctg found from uncertainty/current measurement
                 and each dimension is multiplied in.
             */
 

@@ -468,6 +468,7 @@ void serialReadObj_EventHandler(eventQueue_t* event)
                                         int16_t measStatus = numString.toInt();
 
                                         sendEvent((measStatus == 0) ? msmtMgrEvt_DisableFinalReports : msmtMgrEvt_EnableFinalReports, 0, 0);
+                                        sendEvent(accumulationEvt_DataWriteToFlashTimeout, 0, 0);   //  Write accumulated statistics to Flash upon exiting the main screen
                                     }
                                     break;
 
@@ -598,6 +599,7 @@ void serialReadObj_EventHandler(eventQueue_t* event)
                                 case serialReadEvt_AccumScreenClear:
                                     dbgSerial.print  (F("AccumScreenClear\n"));
                                     accumulationObj_ClearAccumulationScreen();
+                                    sendEvent(accumulationEvt_DataWriteToFlashTimeout, 0, 0);
                                     break;
 
                                 case serialReadEvt_TallyStatus:

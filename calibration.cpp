@@ -5,6 +5,8 @@
 
 #include "commonHeader.h"
 #include "tallyTracker.h"
+#include "accumulationMgr.h"
+
 
 #ifndef _WIN32
 #include <arduino.h>
@@ -1209,6 +1211,15 @@ void writeCalDataToFlash(void)
     updateSingleEepromByte(srcCtr++, 0xFF & (sticksRemaining >>  8));
     updateSingleEepromByte(srcCtr++, 0xFF & (sticksRemaining >>  0));
 
+    //  Write accumulation statistics like BFT, total volume, etc
+    int16_t      accumDataSize;
+
+    srcPtr = (uint8_t *)getAccumulationDataStructure(&accumDataSize);
+    while (accumDataSize-- > 1)
+    {
+        updateSingleEepromByte(srcCtr++, *srcPtr++);
+        accumDataSize--;
+    }
 
     //  Now reset and confirm what we just wrote
     srcCtr         = 0;
@@ -1271,6 +1282,15 @@ void writeCalDataToFlash(void)
     if (EEPROM.read(srcCtr++) != (0xFF & (checkSticksRemaining >>  0))) writeError = true;
     bytesRemaining -= 4;
     srcCtr += 4;
+
+    srcPtr = (uint8_t *)getAccumulationDataStructure(&accumDataSize);
+    while (accumDataSize-- > 1)
+    {
+        if (EEPROM.read(srcCtr++) != *srcPtr++) writeError = true;
+
+        updateSingleEepromByte(srcCtr++, *srcPtr++);
+    }
+
 #ifdef  DONT_DO
     dbgSerial.println(F("writeCalDataToFlash exit"));
 #endif  //  DONT_DO
@@ -1373,6 +1393,13 @@ void readCalDataFromFlash(bool setStickcount)
         sendEvent(tallyTrkEvt_SetCountRemaining, newRemainingSticks, 0);
     }
     bytesRemaining -= 4;
+
+    int16_t   accumDataSize;
+    destPtr = (uint8_t *)getAccumulationDataStructure(&accumDataSize);
+    while (accumDataSize-- > 1)
+    {
+        *destPtr++ = EEPROM.read(srcCtr++);
+    }
 }
 
 float   theRealDenominator;
@@ -1462,5 +1489,3 @@ float densityFromRawmsmts_kgm3(void)
 
     return returnValue;
 }
-
-

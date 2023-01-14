@@ -9,7 +9,7 @@
 
 typedef struct
 {
-    //  First, all the higher level important stats 
+    //  First, all the higher level important stats
     int32_t     stickCount_light,       //  counts
                 stickLengthSum_light,   //  mm
                 boardFeetSum_light,     //  mm^3
@@ -42,5 +42,5 @@ void accumulationObj_ResetStickStats(void);
 void showMainScreenBftValue(void);
 void showAccumulationScreenAllValues(void);
 void accumulationObj_ShowStickStats(stickState_t *statPtr);
-
+void *getAccumulationDataStructure(int16_t *accumDataSize);
 

@@ -64,6 +64,8 @@ static inline void digitalWrite(int way, int pin) { }
 
 #define     _NOP()
 
+void dtostrf(double fltVal, int length, int decimalCnt, char const* destStr);
+
 #endif  //  _WIN32
 
 
