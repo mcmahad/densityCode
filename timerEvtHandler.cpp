@@ -134,6 +134,7 @@ void cancelTimer(event_t eventId)
         }
         timerPtr++;
     }
+    cancelQueuedTimerStartEvents(eventId);
 }
 
 

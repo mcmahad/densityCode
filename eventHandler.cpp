@@ -143,6 +143,19 @@ void sendEvent(event_t eventId, int32_t data1, int32_t data2)
 }
 
 
+void cancelQueuedTimerStartEvents(event_t eventId)
+{
+    for (int index = 0; index < MAX_EVENTS; index++)
+    {
+        eventQueue_t    *eventQueuePtr = &eventQueue[index];
+        if ((eventQueuePtr->eventId == timerEvt_startTimer  ||  eventQueuePtr->eventId == timerEvt_startPeriodicTimer)  &&  eventQueuePtr->data1 == eventId)
+        {
+            eventQueue[index].eventId = systemEvt_nullEvt;
+        }
+    }
+}
+
+
 void processEvents(void)
 {
     updateTimerEvents();

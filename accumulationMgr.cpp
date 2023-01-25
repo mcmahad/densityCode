@@ -105,7 +105,7 @@ void accumulationObj_ReportNewStickStats(const stickState_t *statPtr)
     dbgSerial.print(F("\n\n"));
 
     //  Start or restart the idle timer
-    sendEvent(timerEvt_cancelTimer, accumulationEvt_DataWriteToFlashTimeout, 0);
+    cancelTimer(accumulationEvt_DataWriteToFlashTimeout);
     sendEvent(timerEvt_startTimer, accumulationEvt_DataWriteToFlashTimeout, 1000 * 60 * 10);        //  Force an update after 10 minutes inactivity
 
     accumulationStickCountSinceLastWrite++;
@@ -274,18 +274,21 @@ void showMainScreenBftValue(void)
     nextionSerial.print(displayString);
     nextionSerial.print(F("\"\xFF\xFF\xFF"));
 
-    dbgSerial.print(F("bftSum="));
-    dbgSerial.print(bftSum);
-    dbgSerial.print(F("  float="));
-    dbgSerial.print(bft_float);
-    dbgSerial.print(F("  displayString="));
-    dbgSerial.print(displayString);
-    dbgSerial.print(F("\xFF\xFF\xFF"));
+    if (0)
+    {
+        dbgSerial.print(F("bftSum="));
+        dbgSerial.print(bftSum);
+        dbgSerial.print(F("  float="));
+        dbgSerial.print(bft_float);
+        dbgSerial.print(F("  displayString="));
+        dbgSerial.print(displayString);
+        dbgSerial.print(F("\xFF\xFF\xFF"));
 
-    dbgSerial.print(F("bft.txt=\""));
-    dbgSerial.print(displayString);
-    dbgSerial.print(F("\"\xFF\xFF\xFF"));
-    dbgSerial.print(F("\n"));
+        dbgSerial.print(F("bft.txt=\""));
+        dbgSerial.print(displayString);
+        dbgSerial.print(F("\"\xFF\xFF\xFF"));
+        dbgSerial.print(F("\n"));
+    }
 }
 
 
@@ -468,7 +471,7 @@ void accumulationObj_EventHandler(const eventQueue_t* event)
         {
             //  Write data to Flash
             accumulationStickCountSinceLastWrite = 0;
-            sendEvent(timerEvt_cancelTimer, accumulationEvt_DataWriteToFlashTimeout, 0);
+           cancelTimer(accumulationEvt_DataWriteToFlashTimeout);
             writeCalDataToFlash();
         }
         break;

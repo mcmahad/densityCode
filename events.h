@@ -141,6 +141,7 @@ typedef struct
 
 void sendEvent(event_t eventId, int32_t data0, int32_t data1);
 void showAllQueuedEvents(void);
+void cancelQueuedTimerStartEvents(event_t eventId);
 
 void cancelTimer(event_t eventId);
 int16_t timerActiveCount(void);

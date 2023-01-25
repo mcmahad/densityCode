@@ -82,6 +82,8 @@ static event_t parseNewCommand(uint8_t *cmdPtr)
     else if (strncmp_P((char *)cmdPtr, cmdString_ToggleTareState, 6) == 0) returnValue = serialReadEvt_ToggleTareDebugState;
     else if (strncmp_P((char *)cmdPtr, cmdString_ToggleLogState,  4) == 0) returnValue = serialReadEvt_ToggleLogDebugState;
     else if (strncmp_P((char *)cmdPtr, cmdString_VersionReqState, 4) == 0) returnValue = serialReadEvt_RequestVersionInfo;
+    else if (strncmp_P((char *)cmdPtr, cmdString_TallyStatus,    12) == 0) returnValue = serialReadEvt_TallyStatus;
+    else if (strncmp_P((char *)cmdPtr, cmdString_TallyValid,     11) == 0) returnValue = serialReadEvt_TallyValid;
     else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenEnable,  9) == 0) returnValue = serialReadEvt_AccumScreenEnable;
     else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenDisable, 9) == 0) returnValue = serialReadEvt_AccumScreenDisable;
     else if (strncmp_P((char *)cmdPtr, cmdString_AccumScreenClear,  10) == 0) returnValue = serialReadEvt_AccumScreenClear;
@@ -93,7 +95,7 @@ static event_t parseNewCommand(uint8_t *cmdPtr)
     if (returnValue != systemEvt_nullEvt  &&  returnValue != serialReadEvt_NullString)
     {
         //  Halt the flush timer if we just parsed a command
-        sendEvent(timerEvt_cancelTimer, serialReadEvt_CmdFlushTimeout, 0);
+        cancelTimer(serialReadEvt_CmdFlushTimeout);
         if (readDataHeadPtr != readDataTailPtr)
         {   //  Restart the flush timer if there is still more stuff in the serial FIFO buffer
             sendEvent(timerEvt_startTimer, serialReadEvt_CmdFlushTimeout, 500);
@@ -171,8 +173,8 @@ void serialReadObj_EventHandler(eventQueue_t* event)
 
                         if (readDataHeadPtr == readDataTailPtr)
                         {   //  Fifo was empty and now not empty, start a flush timeout to avoid stalls
-                            sendEvent(timerEvt_cancelTimer, serialReadEvt_CmdFlushTimeout,   0);
-                            sendEvent(timerEvt_startTimer,  serialReadEvt_CmdFlushTimeout, 500);
+                            cancelTimer(serialReadEvt_CmdFlushTimeout);
+                            sendEvent(timerEvt_startTimer, serialReadEvt_CmdFlushTimeout, 500);
                         }
 
                         //  Put the new character in the read fifo
@@ -631,8 +633,8 @@ void serialReadObj_EventHandler(eventQueue_t* event)
                                     break;
                                 }
 
-                                sendEvent(timerEvt_cancelTimer, serialReadEvt_ClearReceiveBuffer,   0);
-                                sendEvent(timerEvt_startTimer,  serialReadEvt_ClearReceiveBuffer, 500);
+                                cancelTimer(serialReadEvt_ClearReceiveBuffer);
+                                sendEvent(timerEvt_startTimer, serialReadEvt_ClearReceiveBuffer, 500);
 
                                 completeResponseAvailable = false;
 

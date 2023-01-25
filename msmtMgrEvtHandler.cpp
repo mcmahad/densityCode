@@ -1570,7 +1570,7 @@ static      int8_t      colorIndex   = 0;
                     sendEvent(binningEvt_SetCurrentStickDensity, (int32_t)totalDensity_kgPerMeter3            , 0);
 
                     sendEvent(tallyTrkEvt_DensityPublished, (int32_t)(totalDensity_kgPerMeter3 * 10.0), 0);
-                    sendEvent(timerEvt_cancelTimer, msmtMgrEvt_ForceDensityDisplayUpdate, 0);
+                    cancelTimer(msmtMgrEvt_ForceDensityDisplayUpdate);
                     sendEvent(timerEvt_startTimer,  msmtMgrEvt_ForceDensityDisplayUpdate, 50);
 //                  dbgSerial.println(F("Stick Count density published"));
 
@@ -1603,6 +1603,7 @@ static      int8_t      colorIndex   = 0;
                         delay(POST_SERIAL_PAUSE_MSEC);
                         dbgSerial.println(F("Showed stick Count"));
                     }
+                    cancelTimer(msmtMgrEvt_ReportMainScreenAccumulations);
                     sendEvent(timerEvt_startTimer, msmtMgrEvt_ReportMainScreenAccumulations, 60);
 #endif  //  _WIN32
                 }
@@ -1628,6 +1629,7 @@ static      int8_t      colorIndex   = 0;
                     nextionSerial.print(F("\"\xFF\xFF\xFF"));
                     delay(POST_SERIAL_PAUSE_MSEC);
                 }
+                cancelTimer(msmtMgrEvt_ReportMainScreenAccumulations);
                 sendEvent(timerEvt_startTimer, msmtMgrEvt_ReportMainScreenAccumulations, 60);
 #endif // !_WIN32
             }

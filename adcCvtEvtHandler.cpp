@@ -4,6 +4,7 @@
 #include "adcCvtEvtHandler.h"
 #include "ADS1256.h"
 #include "calibration.h"
+#include "events.h"
 
 //#define SPI_MOSI_PIN     11   //  Always DIO11 on the Arduino Uno
 //#define SPI_MISO_PIN     12   //  Always DIO12 on the Arduino Uno
@@ -25,7 +26,8 @@ void adcCvtObj_Initialize(void)
 {
     adcConverter.ads1256_Init(SPI_CHIPSEL_PIN, DATAREADY_PIN, SYNCDOWN_PIN, RESET_PIN);
 
-    sendEvent(timerEvt_startTimer,  adcCvtEvt_WaitConverterReadyTimeout, 12);
+    cancelTimer(adcCvtEvt_WaitConverterReadyTimeout);
+    sendEvent(timerEvt_startTimer, adcCvtEvt_WaitConverterReadyTimeout, 12);
 
     sendEvent(timerEvt_startTimer,  adcCvtEvt_WatchdogTimeout, 1000);
 //  sendEvent(timerEvt_startPeriodicTimer, adcCvtEvt_BumpGain, 1000);
@@ -82,7 +84,7 @@ void adcCvtObj_EventHandler(eventQueue_t* event)
             if (currentSerialBuffSize < maxSerialBuffSize)
             {
                 //  Still some serial data to send, wait another millisecond
-                sendEvent(timerEvt_cancelTimer, adcCvtEvt_WaitConverterReadyTimeout, 0);
+                cancelTimer(adcCvtEvt_WaitConverterReadyTimeout);
                 sendEvent(timerEvt_startTimer,  adcCvtEvt_WaitConverterReadyTimeout, 1);
 //              dbgSerial.print(F("X"));
             }
@@ -107,6 +109,7 @@ void adcCvtObj_EventHandler(eventQueue_t* event)
             int32_t         oldValue = rawAdcReading[currentChannel];
 
             rawAdcReading[currentChannel] = adcConverter.readConvertedDataAndStartNextChannel();
+            cancelTimer(adcCvtEvt_WaitConverterReadyTimeout);
             sendEvent(timerEvt_startTimer, adcCvtEvt_WaitConverterReadyTimeout, 12);
 
 //          sendEvent(timerEvt_cancelTimer, adcCvtEvt_RestartCurrentConversionTimeout, 0);
@@ -177,16 +180,16 @@ void adcCvtObj_EventHandler(eventQueue_t* event)
 //          adcConverter.addToFirstDrdyDelayTime(1);
 
             /*  Wait another millisecond and try again  */
-            sendEvent(timerEvt_cancelTimer, adcCvtEvt_WaitConverterReadyTimeout, 0);
-            sendEvent(timerEvt_startTimer,  adcCvtEvt_WaitConverterReadyTimeout, 1);
+            cancelTimer(adcCvtEvt_WaitConverterReadyTimeout);
+            sendEvent(timerEvt_startTimer, adcCvtEvt_WaitConverterReadyTimeout, 1);
         }
         break;
 
     case adcCvtEvt_RestartCurrentConversionTimeout:
         //   This will restart the conversion, if it is useful for debug to delay conversion for testin
         adcConverter.ads1256_RestartCurrentMeasurement();
-        sendEvent(timerEvt_cancelTimer, adcCvtEvt_WaitConverterReadyTimeout, 0);
-        sendEvent(timerEvt_startTimer,  adcCvtEvt_WaitConverterReadyTimeout, 12);
+        cancelTimer(adcCvtEvt_WaitConverterReadyTimeout);
+        sendEvent(timerEvt_startTimer, adcCvtEvt_WaitConverterReadyTimeout, 12);
         break;
 
         default:
